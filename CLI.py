@@ -37,11 +37,16 @@ def main():
                         break
                     case "help":
                         Commands.Help()
+                    case "login":
+                        username = input("Please enter your username: ")
+                        password = input("Please enter your password: ")
+                        
 
             conn = psycopg2.connect(**params)
             curs = conn.cursor()
             print("Database connection established")
             print(curs.fetchall())
+
     except Exception as e:
         print("Connection failed")
         print(e)
