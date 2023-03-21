@@ -38,9 +38,8 @@ def main():
                     case "help":
                         Commands.Help()
                     case "login":
-                        username = input("Please enter your username: ")
-                        password = input("Please enter your password: ")
-                        
+                        Commands.Login()
+
 
             conn = psycopg2.connect(**params)
             curs = conn.cursor()
