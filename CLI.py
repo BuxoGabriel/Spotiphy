@@ -42,6 +42,9 @@ def main():
                         break
                     case "help":
                         Commands.Help()
+                    case "login":
+                        Commands.Login()
+
 
     except Exception as e:
         print("Connection failed")
