@@ -23,25 +23,26 @@ def main():
                 'host': 'localhost',
                 'port': server.local_bind_port
             }
+
+            print("Welcome to Spotiphy! Connecting to database...")
+            conn = psycopg2.connect(**params)
+            curs = conn.cursor()
+            print("Database connection established")
             
-            print("Welcome to Spotiphy! The Commands that can be used are as follows")
             Commands.Help()
             while True:
-                userInp = input().split()
+                userInp = input().lower().split()
                 args = len(userInp)
                 command = userInp[0]
                 if args == 0:
                     continue
+
                 match command:
                     case "quit":
                         break
                     case "help":
                         Commands.Help()
 
-            conn = psycopg2.connect(**params)
-            curs = conn.cursor()
-            print("Database connection established")
-            print(curs.fetchall())
     except Exception as e:
         print("Connection failed")
         print(e)
