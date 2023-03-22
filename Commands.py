@@ -2,10 +2,11 @@ import psycopg2
 import datetime
 def Help():
     print("""The Commands Available are as follows:
-- help: gives this help command
-- quit: ends program
-- register: creates an account
-""")
+    help: gives this help command
+    register: creates an account
+    login: logs in to account
+    account: displays account information
+    quit: ends program""")
 
 # Registers User
 # Returns uid and username in a tuple
@@ -23,6 +24,7 @@ def Register(conn) -> tuple[int, str]:
     curs.execute("""SELECT * FROM "User" WHERE username = %s""", (username,))
     if len(curs.fetchall()) != 0:
         print("Register User Failed: Username Taken!")
+        curs.close()
         return -1, ""
     # Password
     password = input("Enter a password between 6 and 16 characters: ")
@@ -56,3 +58,21 @@ def Register(conn) -> tuple[int, str]:
     print("Registered User Successfully!")
     print("Logged in as %s!" % username)
     return uid, username
+           
+                        
+def Login(conn) -> tuple[int, str]:    
+    cur = conn.cursor()                    
+    username = input("Enter your username: ")
+    password = input("Enter your password: ")
+                        
+    cur.execute("""SELECT uid, username FROM "User" WHERE username = %s AND password = %s""", 
+                    (username, password))
+
+    result = cur.fetchone()
+    cur.close()
+    if result == None:
+        print("Login Failed: No User found matching credentials")
+        return -1, ""
+    print("Registered User Successfully!")
+    print("Logged in as %s!" % username)
+    return result

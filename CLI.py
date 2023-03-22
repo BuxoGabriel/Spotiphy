@@ -29,8 +29,8 @@ def main():
             print("Database connection established!")
             
             loggedIn = False
-            uid = -1
-            username = ""
+            global_uid = -1
+            global_username = ""
 
             Commands.Help()
             while True:
@@ -49,6 +49,21 @@ def main():
                         uid, username = Commands.Register(conn)
                         if uid != -1:
                             loggedIn = True
+                            global_uid = uid
+                            global_username = username
+                    case "login":
+                        uid, username = Commands.Login(conn)
+                        if uid != -1:
+                            loggedIn = True
+                            global_uid = uid
+                            global_username = username
+                    case "account":
+                        if not loggedIn: print("Not logged in")
+                        else:
+                            print("Logged in as %s" % global_username)
+                            print("User ID: %s" % global_uid)
+
+
     except Exception as e:
         print(e)
     finally:
