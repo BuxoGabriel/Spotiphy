@@ -28,6 +28,10 @@ def main():
             conn = psycopg2.connect(**params)
             print("Database connection established!")
             
+            loggedIn = False
+            uid = -1
+            username = ""
+
             Commands.Help()
             while True:
                 userInp = input("Spotiphy: ").lower().split()
@@ -42,7 +46,9 @@ def main():
                     case "help":
                         Commands.Help()
                     case "register":
-                        Commands.Register(conn)
+                        uid, username = Commands.Register(conn)
+                        if uid != -1:
+                            loggedIn = True
     except Exception as e:
         print(e)
     finally:
