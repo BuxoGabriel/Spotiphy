@@ -78,23 +78,24 @@ def Login(conn) -> tuple[int, str]:
     print("Logged in as %s" % username)
     return result
 
+# Helper Func
+def gatherCollections(conn, uid):
+    curs = conn.cursor()
+    curs.execute("""SELECT c.name, c.cid FROM "UserCollection" uc, "Collection" c WHERE uc.cid = c.uid AND uc.uid = %s """,
+        (uid,))
+    # List of tuples(collection id, collection name)
+    collection_list = curs.fetchall()
+    amount_of_collections = len(collection_list)
+    if amount_of_collections == 0:
+        print("You have no collections")
+    else:
+        print("Your collections:")
+        for i in range(amount_of_collections):
+            print("%s: %s" % (i + 1, collection_list[i][0]))
+    curs.close()
+    return collection_list
+
 def Collections(conn, uid):
-    # Helper Func
-    def gatherCollections(conn, uid):
-        curs = conn.cursor()
-        curs.execute("""SELECT c.name, c.cid FROM "UserCollection" uc, "Collection" c WHERE uc.uid = %s""",
-            (uid,))
-        # List of tuples(collection id, collection name)
-        collection_list = curs.fetchall()
-        amount_of_collections = len(collection_list)
-        if amount_of_collections == 0:
-            print("You have no collections")
-        else:
-            print("Your collections:")
-            for i in range(amount_of_collections):
-                print("%s: %s" % (i + 1, collection_list[i][0]))
-        curs.close()
-        return collection_list
     # Collections Start
     try:
         collection_list = gatherCollections(conn, uid)
