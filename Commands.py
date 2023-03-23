@@ -6,6 +6,7 @@ def Help():
     register: creates an account
     login: logs in to account
     account: displays account information
+    collections: manipulation of collections
     quit: ends program""")
 
 # Registers User
@@ -76,3 +77,6 @@ def Login(conn) -> tuple[int, str]:
     print("Registered User Successfully!")
     print("Logged in as %s!" % username)
     return result
+
+def Collection(conn: psycopg2.connection, uid):
+    cur = conn.cursor()

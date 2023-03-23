@@ -34,11 +34,9 @@ def main():
 
             Commands.Help()
             while True:
-                userInp = input("Spotiphy: ").lower().split()
-                args = len(userInp)
-                if args == 0:
+                command = input("Spotiphy: ").lower()
+                if command == "":
                     continue
-                command = userInp[0]
 
                 match command:
                     case "quit":
@@ -62,6 +60,12 @@ def main():
                         else:
                             print("Logged in as %s" % global_username)
                             print("User ID: %s" % global_uid)
+                    case "collection":
+                        if not loggedIn: 
+                            print("You are not logged in")
+                            print("You must be logged in in order to alter collections")
+                        else:
+                            Commands.Collection(conn, uid)
 
 
     except Exception as e:
