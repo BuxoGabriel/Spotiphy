@@ -103,6 +103,7 @@ def Collections(conn, uid):
             print("""Available operations:
     create: create a new collection
     view: view a collection to add and delete songs
+    sort: sort a collection by either song name, genre, year of release, or artist's name
     quit: leave collections""")
             command = input("Spotiphy Collections: ").lower().strip()
             match command:
@@ -134,6 +135,18 @@ def Collections(conn, uid):
                     for i in range(amount_of_songs):
                         song_title, song_id, trackNum = tracklist[i]
                         print("%s: %s" % (trackNum, song_title))
+
+                case "sort" | "s":
+                    category = input("Enter a category: ")
+                    match command:
+                        case "song name":
+                            curs.execute("""SELECT s.title, s.sid, tl."posNum" as pos FROM "Song" s, "CollectionTrackList" tl WHERE tl.cid = %s ORDER BY s.title""", (collection_id,))
+                            tracklist = curs.fetchall()
+                            amount_of_songs = len(tracklist)
+                            print("Tracklist for Collection (in order by song name): %s" % collection_name)
+                            for i in range(amount_of_songs):
+                                song_title, song_id, trackNum = tracklist[i]
+                                print("%s: %s" % (trackNum, song_title))
 
                 case "quit" | "q":
                     curs.close()
