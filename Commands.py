@@ -128,7 +128,8 @@ def Collections(conn, uid):
                 case "view" | "v":
                     collection_number = int(input("Select Collection number: ")) - 1
                     collection_name, collection_id = collection_list[collection_number]
-                    curs.execute("""SELECT s.title, s.sid, tl."posNum" as pos FROM "Song" s, "CollectionTrackList" tl WHERE tl.cid = %s ORDER BY pos ASC""", (collection_id,))
+                    curs.execute("""SELECT s.title, s.sid, tl."posNum" as pos FROM "Song" s, "CollectionTrackList" tl WHERE tl.sid = s.sid tl.cid = %s ORDER BY pos ASC""",
+                                    (collection_id,))
                     tracklist = curs.fetchall()
                     amount_of_songs = len(tracklist)
                     print("Tracklist for Collection: %s" % collection_name)
