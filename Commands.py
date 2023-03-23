@@ -74,14 +74,13 @@ def Login(conn) -> tuple[int, str]:
     if result == None:
         print("Login Failed: No User found matching credentials")
         return -1, ""
-    print("Registered User Successfully!")
     print("Logged in as %s" % username)
     return result
 
 # Helper Func
 def gatherCollections(conn, uid):
     curs = conn.cursor()
-    curs.execute("""SELECT c.name, c.cid FROM "UserCollection" uc, "Collection" c WHERE uc.cid = c.uid AND uc.uid = %s """,
+    curs.execute("""SELECT c.name, c.cid FROM "UserCollection" uc, "Collection" c WHERE uc.cid = c.cid AND uc.uid = %s """,
         (uid,))
     # List of tuples(collection id, collection name)
     collection_list = curs.fetchall()
@@ -128,7 +127,7 @@ def Collections(conn, uid):
                 case "view" | "v":
                     collection_number = int(input("Select Collection number: ")) - 1
                     collection_name, collection_id = collection_list[collection_number]
-                    curs.execute("""SELECT s.title, s.sid, tl."posNum" as pos FROM "Song" s, "CollectionTrackList" tl WHERE tl.sid = s.sid tl.cid = %s ORDER BY pos ASC""",
+                    curs.execute("""SELECT s.title, s.sid, tl."posNum" as pos FROM "Song" s, "CollectionTrackList" tl WHERE tl.sid = s.sid AND tl.cid = %s ORDER BY pos ASC""",
                                     (collection_id,))
                     tracklist = curs.fetchall()
                     amount_of_songs = len(tracklist)
@@ -145,4 +144,4 @@ def Collections(conn, uid):
                     print("Unrecognized Command!")
     except Exception as e:
         print("Operation Failed!")
-        # print(e)
+        print(e)
