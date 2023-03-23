@@ -147,7 +147,31 @@ def Collections(conn, uid):
                             for i in range(amount_of_songs):
                                 song_title, song_id, trackNum = tracklist[i]
                                 print("%s: %s" % (trackNum, song_title))
-
+                        case "song genre":
+                            curs.execute("""SELECT s.title, s.genre, s.sid, tl."posNum" as pos FROM "Song" s, "CollectionTrackList" tl WHERE tl.cid = %s ORDER BY s.genre""", (collection_id,))
+                            tracklist = curs.fetchall()
+                            amount_of_songs = len(tracklist)
+                            print("Tracklist for Collection (in order by song genre): %s" % collection_name)
+                            for i in range(amount_of_songs):
+                                song_title, song_genre, song_id, trackNum = tracklist[i]
+                                print("%s: %s, %s" % (trackNum, song_title, song_genre))
+                        case "year":
+                            curs.execute("""SELECT s.title, s.year, s.sid, tl."posNum" as pos FROM "Song" s, "CollectionTrackList" tl WHERE tl.cid = %s ORDER BY s.year""", (collection_id,))
+                            tracklist = curs.fetchall()
+                            amount_of_songs = len(tracklist)
+                            print("Tracklist for Collection (in order by year): %s" % collection_name)
+                            for i in range(amount_of_songs):
+                                song_title, year, song_id, trackNum = tracklist[i]
+                                print("%s: %s, %s" % (trackNum, song_title, year))
+                        case "artist name":
+                            curs.execute("""SELECT s.title, s.artist, s.sid, tl."posNum" as pos FROM "Song" s, "CollectionTrackList" tl WHERE tl.cid = %s ORDER BY s.artist""", (collection_id,))
+                            tracklist = curs.fetchall()
+                            amount_of_songs = len(tracklist)
+                            print("Tracklist for Collection (in order by artist name): %s" % collection_name)
+                            for i in range(amount_of_songs):
+                                song_title, artist, song_id, trackNum = tracklist[i]
+                                print("%s: %s, %s" % (trackNum, song_title, artist))
+            
                 case "quit" | "q":
                     curs.close()
                     return
