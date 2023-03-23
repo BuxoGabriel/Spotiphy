@@ -1,5 +1,7 @@
 Include/
 Lib/
 Scripts/
+__pycache__/
 .env
 pyvenv.cfg
+__pycache__/Commands.cpython-310.pyc

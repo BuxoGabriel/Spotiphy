@@ -34,34 +34,40 @@ def main():
 
             Commands.Help()
             while True:
-                userInp = input("Spotiphy: ").lower().split()
-                args = len(userInp)
-                if args == 0:
+                command = input("Spotiphy: ").lower()
+                if command == "":
                     continue
-                command = userInp[0]
 
                 match command:
-                    case "quit":
+                    case "quit" | "q":
                         break
-                    case "help":
+                    case "help" | "h":
                         Commands.Help()
-                    case "register":
+                    case "register" | "r":
                         uid, username = Commands.Register(conn)
                         if uid != -1:
                             loggedIn = True
                             global_uid = uid
                             global_username = username
-                    case "login":
+                    case "login" | "l":
                         uid, username = Commands.Login(conn)
                         if uid != -1:
                             loggedIn = True
                             global_uid = uid
                             global_username = username
-                    case "account":
+                    case "account" | "a":
                         if not loggedIn: print("Not logged in")
                         else:
                             print("Logged in as %s" % global_username)
                             print("User ID: %s" % global_uid)
+                    case "collections" | "c":
+                        if not loggedIn: 
+                            print("You are not logged in")
+                            print("You must be logged in in order to alter collections")
+                        else:
+                            Commands.Collections(conn, uid)
+                    case default:
+                        print("Unrecognized command!")
 
 
     except Exception as e:
