@@ -138,7 +138,7 @@ def Collections(conn, uid):
 
                 case "sort" | "s":
                     category = input("Enter a category: ")
-                    match command:
+                    match category:
                         case "song name":
                             curs.execute("""SELECT s.title, s.sid, tl."posNum" as pos FROM "Song" s, "CollectionTrackList" tl WHERE tl.cid = %s ORDER BY s.title""", (collection_id,))
                             tracklist = curs.fetchall()
