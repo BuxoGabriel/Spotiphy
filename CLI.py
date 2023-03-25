@@ -66,10 +66,10 @@ def main():
                             print("You must be logged in in order to alter collections")
                         else:
                             Commands.Collections(conn, uid)
+                    case "search" | "s":
+                        Commands.Search(conn, loggedIn)
                     case default:
                         print("Unrecognized command!")
-
-
     except Exception as e:
         print(e)
     finally:
