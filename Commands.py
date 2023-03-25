@@ -196,7 +196,7 @@ def Search(conn, loggedIn, uid):
                         artist_name, song_title, album_name, sid, songlength  = results[song_selected]
                         print("listening to: %s..." % song_title)
                         if loggedIn:
-                            date_listened = datetime.date.today()
+                            date_listened = datetime.datetime.now()
                             curs.execute("""INSERT INTO "ListenHistory"("uid", "sid", "date") VALUES (%s, %s, %s)""", (uid, sid, date_listened))
                             conn.commit()
                         print("Finished listening to %s. Time Elapsed: %ss" % (song_title, songlength))

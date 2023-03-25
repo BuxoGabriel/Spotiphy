@@ -74,7 +74,7 @@ def Listen(conn, uid, collection_list):
     for i in range(amount_of_songs):
         song_title, sid, trackNum, song_length  = tracklist[i]
         print("listening to %s..." % song_title)
-        date_listened = datetime.date.today()
+        date_listened = datetime.datetime.now()
         curs.execute("""INSERT INTO "ListenHistory"("uid", "sid", "date") VALUES (%s, %s, %s)""", (uid, sid, date_listened))
         time_elapsed += song_length
     print("Finished listening to %s. Total Time Elapsed: %s" % (collection[0], time_elapsed))
