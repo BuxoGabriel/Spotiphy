@@ -206,7 +206,7 @@ def Search(conn, loggedIn, uid):
                             print("Track not found!")
                             return
                         else:
-                            curs.execute("""DELETE FROM "CollectionTrackList" where sid = %s and cid = %s """ (sid, cid))
+                            curs.execute("""DELETE FROM "CollectionTrackList" where sid = %s and cid = %s """,(sid, cid))
                             conn.commit()
                             curs.close()
                             print("Song deleted from collection!")
