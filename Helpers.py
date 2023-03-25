@@ -36,7 +36,8 @@ def CreateCollection(conn, uid):
     curs.close()
     print("Operation successful!")
 
-def ViewCollection(conn, uid, collection_list):
+# Helper Function
+def fetchTracklist(conn, collection_list):
     curs = conn.cursor()
 
     collection_number = int(input("Select Collection number: ")) - 1
@@ -46,13 +47,36 @@ def ViewCollection(conn, uid, collection_list):
         curs.close()
         return
     
-    collection_name, collection_id = collection_list[collection_number]
-    curs.execute("""SELECT s.title, s.sid, tl."posNum" as pos FROM "Song" s, "CollectionTrackList" tl WHERE tl.sid = s.sid AND tl.cid = %s ORDER BY pos ASC""",
-                    (collection_id,))
+    collection = collection_list[collection_number]
+    curs.execute("""SELECT s.title, s.sid, tl."posNum", s.songlength as pos FROM "Song" s, "CollectionTrackList" tl
+        WHERE tl.sid = s.sid AND tl.cid = %s
+        ORDER BY pos ASC""",
+                    (collection[1],))
     tracklist = curs.fetchall()
+    curs.close()
+    return tracklist, collection
+
+def ViewCollection(conn, collection_list):
+    tracklist, collection = fetchTracklist(conn, collection_list)
     amount_of_songs = len(tracklist)
-    print("Tracklist for Collection: %s" % collection_name)
+    print("Tracklist for Collection: %s" % collection[0]) #col[0] is col name
     for i in range(amount_of_songs):
-        song_title, song_id, trackNum = tracklist[i]
+        song_title, sid, trackNum, song_length = tracklist[i]
         print("%s: %s" % (trackNum, song_title))
-    return tracklist
+    return
+
+def Listen(conn, uid, collection_list):
+    tracklist, collection = fetchTracklist(conn, collection_list)
+    amount_of_songs = len(tracklist)
+    print("You are listening to %s" % collection[0])
+    curs = conn.cursor()
+    time_elapsed = 0
+    for i in range(amount_of_songs):
+        song_title, sid, trackNum, song_length  = tracklist[i]
+        print("listening to %s..." % song_title)
+        date_listened = datetime.datetime.now()
+        curs.execute("""INSERT INTO "ListenHistory"("uid", "sid", "date") VALUES (%s, %s, %s)""", (uid, sid, date_listened))
+        time_elapsed += song_length
+    print("Finished listening to %s. Total Time Elapsed: %s" % (collection[0], time_elapsed))
+    conn.commit()
+    curs.close()
