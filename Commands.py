@@ -159,6 +159,7 @@ def Search(conn, loggedIn, uid):
             while True:
                 print("""Available operations:
     add: adds a song to one of your collections
+    delete: removes a song from one of your collections
     quit: leave search song""")
                 command = input("Spotiphy Search Song: ")
                 match command:
@@ -186,6 +187,25 @@ def Search(conn, loggedIn, uid):
                         conn.commit()
                         curs.close()
                         print("Song added to collection!")
+                        
+                    case "delete":
+                        if not loggedIn:
+                            print("Cannot remove song. Not logged in!")
+                            return
+                        # Get sid
+                        song_selected = int(input("Select a song: ")) - 1
+                        sid = results[song_selected][3]
+                        # Get cid
+                        user_collections = h.GatherCollections(conn, uid)
+                        collection_number = int(input("Select Collection number: ")) - 1
+                        cid = user_collections[collection_number][1]
+                        # Get posNum
+                        curs.execute("""SELECT MAX("posNum") FROM "CollectionTrackList" WHERE cid = %s """, (cid,))
+                        posNum = curs.fetchone()[0]
+                        if posNum is None:
+                            posNum = 1
+                        else:
+                            posNum += 1
                         
                     case "quit" | "q":
                         curs.close()
