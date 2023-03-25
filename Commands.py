@@ -1,14 +1,14 @@
 import psycopg2
 import datetime
-import collectionHelpers as h
+import Helpers as h
 def Help():
     print("""The Commands Available are:
     help: gives this help command
     register: creates an account
     login: logs in to account
     account: displays account information
-    collections: manipulation of collections
-    search: lets you search for a song or album
+    collections: manipulate and listen to your collections
+    search: lets you search for a song or album to add to collection or listen
     quit: ends program""")
 
 ### Register Command
@@ -91,6 +91,7 @@ def Collections(conn, uid):
             print("""Available operations:
     create: create a new collection
     view: view a collection to add and delete songs
+    listen: listen to all the songs in collection
     quit: leave collections""")
             command = input("Spotiphy Collections: ").lower().strip()
             match command:
@@ -98,7 +99,9 @@ def Collections(conn, uid):
                     h.CreateCollection(conn, uid)
                     collection_list = h.GatherCollections(conn, uid)
                 case "view" | "v":
-                    tracklist = h.ViewCollection(conn, uid, collection_list)
+                    h.ViewCollection(conn, collection_list)
+                case "listen" | "l":
+                    h.Listen(conn, uid, collection_list)
                 case "quit" | "q":
                     return
                 case default:
@@ -109,10 +112,10 @@ def Collections(conn, uid):
 
 ### Search Command
 def Search(conn, loggedIn, uid):
-    category = input("What would you like to search for(song, album):")
+    category = input("What would you like to search for(song, album): ")
     match category:
         case "song":
-            search_type = input("Search by(name, artist, album, and genre) or type quit:")
+            search_type = input("Search by(name, artist, album, and genre) or type quit: ")
             curs = conn.cursor()
             match search_type:
                 case "name":
@@ -159,6 +162,7 @@ def Search(conn, loggedIn, uid):
             while True:
                 print("""Available operations:
     add: adds a song to one of your collections
+    listen: listen to a song
     quit: leave search song""")
                 command = input("Spotiphy Search Song: ")
                 match command:
@@ -186,9 +190,19 @@ def Search(conn, loggedIn, uid):
                         conn.commit()
                         curs.close()
                         print("Song added to collection!")
-                        
+                    case "listen" | "l":
+                        # Get sid
+                        song_selected = int(input("Select a song: ")) - 1
+                        artist_name, song_title, album_name, sid, songlength  = results[song_selected]
+                        print("listening to: %s..." % song_title)
+                        if loggedIn:
+                            date_listened = datetime.date.today()
+                            curs.execute("""INSERT INTO "ListenHistory"("uid", "sid", "date") VALUES (%s, %s, %s)""", (uid, sid, date_listened))
+                            conn.commit()
+                        print("Finished listening to %s. Time Elapsed: %ss" % (song_title, songlength))
                     case "quit" | "q":
                         curs.close()
                         break
         case "album":
+           # TODO
            pass 
