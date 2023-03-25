@@ -1,6 +1,7 @@
 import datetime
 # Helper Functions
 
+# Returns tuple[col name, col id]
 def GatherCollections(conn, uid):
     curs = conn.cursor()
     curs.execute("""SELECT c.name, c.cid FROM "UserCollection" uc, "Collection" c WHERE uc.cid = c.cid AND uc.uid = %s """,
@@ -35,6 +36,24 @@ def CreateCollection(conn, uid):
     conn.commit()
     curs.close()
     print("Operation successful!")
+
+def DeleteCollection(conn, collection_list): 
+    collection_number = int(input("Select Collection number: ")) - 1
+    # error checking collection number value
+    if collection_number not in range(len(collection_list)):
+        print("" + collection_number + "is not a valid collection!")
+        return
+    curs = conn.cursor()
+    collection = collection_list[collection_number]
+    cid = collection[1]
+    curs.execute("""DELETE FROM  "CollectionTrackList" WHERE cid = %s""", (cid,))
+    conn.commit()
+    curs.execute("""DELETE FROM  "UserCollection" WHERE cid = %s""", (cid,))
+    conn.commit()
+    curs.execute("""DELETE FROM "Collection" WHERE cid = %s""", (cid,))
+    conn.commit()
+    curs.close()
+    print("Deleted Collection successfully!")
 
 # Helper Function
 def fetchTracklist(conn, collection_list):

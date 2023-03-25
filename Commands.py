@@ -90,6 +90,7 @@ def Collections(conn, uid):
         while True:
             print("""Available operations:
     create: create a new collection
+    delete: delete a collection
     view: view a collection to add and delete songs
     listen: listen to all the songs in collection
     quit: leave collections""")
@@ -98,6 +99,8 @@ def Collections(conn, uid):
                 case "create" | "c":
                     h.CreateCollection(conn, uid)
                     collection_list = h.GatherCollections(conn, uid)
+                case "delete" | "d":
+                    h.DeleteCollection(conn, collection_list)
                 case "view" | "v":
                     h.ViewCollection(conn, collection_list)
                 case "listen" | "l":
@@ -119,21 +122,21 @@ def Search(conn, loggedIn, uid):
             curs = conn.cursor()
             match search_type:
                 case "name":
-                    inp = input("Song Title: ")
+                    inp = "%" + input("Song Title: ") + "%"
                     curs.execute("""SELECT ar.name, s.title, al.name, s.sid, s.songlength 
                     FROM "Song" s, "Album" al, "AlbumTrackList" atl,"SongArtist" sa, "Artist" ar 
                     WHERE s.sid = sa.sid AND sa.arid = ar.arid AND s.sid = atl.sid AND atl.aid = al.aid 
                         AND s.title LIKE %s
                     ORDER BY al.name, atl."trackNo" """, (inp,))
                 case "artist":
-                    inp = input("Artist Name: ")
+                    inp = "%" + input("Artist Name: ") + "%"
                     curs.execute("""SELECT ar.name, s.title, al.name, s.sid, s.songlength 
                     FROM "Song" s, "Album" al, "AlbumTrackList" atl,"SongArtist" sa, "Artist" ar 
                     WHERE s.sid = sa.sid AND sa.arid = ar.arid AND s.sid = atl.sid AND atl.aid = al.aid 
                         AND ar.name LIKE %s
                     ORDER BY al.name, atl."trackNo" """, (inp,))
                 case "album":
-                    inp = input("Album Name: ")
+                    inp = "%" + input("Album Name: ") + "%"
                     curs.execute("""SELECT ar.name, s.title, al.name, s.sid, s.songlength 
                     FROM "Song" s, "Album" al, "AlbumTrackList" atl,"SongArtist" sa, "Artist" ar 
                     WHERE s.sid = sa.sid AND sa.arid = ar.arid AND s.sid = atl.sid AND atl.aid = al.aid 
