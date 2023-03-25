@@ -202,7 +202,7 @@ def Search(conn, loggedIn, uid):
                         #check if song already exists
                         curs.execute("""SELECT COUNT(sid) FROM "CollectionTrackList" WHERE cid = %s """, (cid,))
                         track_count = curs.fetchone()[0]
-                        if track is None:
+                        if track_count == 0:
                             print("Track not found!")
                             return
                         else:
