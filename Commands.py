@@ -199,13 +199,17 @@ def Search(conn, loggedIn, uid):
                         user_collections = h.GatherCollections(conn, uid)
                         collection_number = int(input("Select Collection number: ")) - 1
                         cid = user_collections[collection_number][1]
-                        # Get posNum
-                        curs.execute("""SELECT MAX("posNum") FROM "CollectionTrackList" WHERE cid = %s """, (cid,))
-                        posNum = curs.fetchone()[0]
-                        if posNum is None:
-                            posNum = 1
+                        #check if song already exists
+                        curs.execute("""SELECT COUNT(sid) FROM "CollectionTrackList" WHERE cid = %s """, (cid,))
+                        track_count = curs.fetchone()[0]
+                        if track is None:
+                            print("Track not found!")
+                            return
                         else:
-                            posNum += 1
+                            curs.execute("""DELETE FROM "CollectionTrackList" where sid = %s and cid = %s """ (sid, cid))
+                            conn.commit()
+                            curs.close()
+                            print("Song deleted from collection!")
                         
                     case "quit" | "q":
                         curs.close()
