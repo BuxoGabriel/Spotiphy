@@ -136,8 +136,6 @@ def Collections(conn, uid):
                     for i in range(amount_of_songs):
                         song_title, song_id, trackNum = tracklist[i]
                         print("%s: %s" % (trackNum, song_title))
-
-                case "sort" | "s":
                     category = input("Enter a category: ")
                     match category:
                         case "song name":
@@ -149,28 +147,28 @@ def Collections(conn, uid):
                                 song_title, song_id, trackNum = tracklist[i]
                                 print("%s: %s" % (trackNum, song_title))
                         case "song genre":
-                            curs.execute("""SELECT s.title, s.genre, s.sid, tl."posNum" as pos FROM "Song" s, "CollectionTrackList" tl WHERE tl.cid = %s ORDER BY s.genre""", (collection_id,))
+                            curs.execute("""SELECT s.title, g.genre, s.sid, sg.sid, sg.gid, t1."posNum" FROM "Song" s, "Genre" g, "SongGenre" sg, "CollectionTrackList" t1 WHERE tl.cid = %s AND s.sid = sg.sid ORDER BY sg.gid""", (collection_id,))
                             tracklist = curs.fetchall()
                             amount_of_songs = len(tracklist)
                             print("Tracklist for Collection (in order by song genre): %s" % collection_name)
                             for i in range(amount_of_songs):
-                                song_title, song_genre, song_id, trackNum = tracklist[i]
+                                song_title, song_genre, song_id, song_genre_id, genre_id, trackNum = tracklist[i]
                                 print("%s: %s, %s" % (trackNum, song_title, song_genre))
                         case "year":
-                            curs.execute("""SELECT s.title, s.year, s.sid, tl."posNum" as pos FROM "Song" s, "CollectionTrackList" tl WHERE tl.cid = %s ORDER BY s.year""", (collection_id,))
+                            curs.execute("""SELECT s.title, lh.year, s.sid, t1."posNum" FROM "Song" s, "ListenHistory" lh, "CollectionTrackList" t1 WHERE tl.cid = %s AND s.sid = lh.sid ORDER BY lh.year""", (collection_id,))
                             tracklist = curs.fetchall()
                             amount_of_songs = len(tracklist)
                             print("Tracklist for Collection (in order by year): %s" % collection_name)
                             for i in range(amount_of_songs):
                                 song_title, year, song_id, trackNum = tracklist[i]
-                                print("%s: %s, %s" % (trackNum, song_title, year))
+                                print("%s: %s, %s" % (trackNum, song_title, song_genre))
                         case "artist name":
-                            curs.execute("""SELECT s.title, s.artist, s.sid, tl."posNum" as pos FROM "Song" s, "CollectionTrackList" tl WHERE tl.cid = %s ORDER BY s.artist""", (collection_id,))
+                            curs.execute("""SELECT s.title, s.sid, sa.sid, a.name, tl."posNum" as pos FROM "Song" s, "SongArtist" sa, "Artist" a, "CollectionTrackList" tl WHERE tl.cid = %s AND s.sid = sa.sid ORDER BY a.name""", (collection_id,))
                             tracklist = curs.fetchall()
                             amount_of_songs = len(tracklist)
                             print("Tracklist for Collection (in order by artist name): %s" % collection_name)
                             for i in range(amount_of_songs):
-                                song_title, artist, song_id, trackNum = tracklist[i]
+                                song_title, song_id, song_artist_id, artist, trackNum = tracklist[i]
                                 print("%s: %s, %s" % (trackNum, song_title, artist))
             
                 case "quit" | "q":
