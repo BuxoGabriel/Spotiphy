@@ -108,7 +108,7 @@ def Collections(conn, uid):
         print(e)
 
 ### Search Command
-def Search(conn, loggedIn):
+def Search(conn, loggedIn, uid):
     category = input("What would you like to search for(song, album):")
     match category:
         case "song":
@@ -141,13 +141,16 @@ def Search(conn, loggedIn):
                 case "quit":
                     curs.close()
                     return
+                case default:
+                    print("Command " + search_type + "does not exist!")
+                    curs.close()
+                    return
             results = curs.fetchall()
-            curs.close()
             song_amount = len(results)
             for i in range(song_amount):
                 artist, title, album, sid, song_length = results[i]
                 print(
-                    ((((("No.: "+ str(i + 1)).ljust(10, " ")
+                    (((((str(i + 1) + ": ").ljust(10, " ")
                       + " Artist: " + artist).ljust(50, " ") 
                       + " Title: " + title).ljust(75, " ")
                      + " Album: " + album).ljust(100, " ")
@@ -160,10 +163,32 @@ def Search(conn, loggedIn):
                 command = input("Spotiphy Search Song: ")
                 match command:
                     case "add":
-                        song_selected = input("")
-                        user_collections = h.GatherCollections
+                        if not loggedIn:
+                            print("Can not add song. Not logged in!")
+                            return
+                        # Get sid
+                        song_selected = int(input("Select a song: ")) - 1
+                        sid = results[song_selected][3]
+                        # Get cid
+                        user_collections = h.GatherCollections(conn, uid)
+                        collection_number = int(input("Select Collection number: ")) - 1
+                        cid = user_collections[collection_number][1]
+                        # Get posNum
+                        curs.execute("""SELECT MAX("posNum") FROM "CollectionTrackList" WHERE cid = %s """, (cid,))
+                        posNum = curs.fetchone()[0]
+                        if posNum is None:
+                            posNum = 1
+                        else:
+                            posNum += 1
+                        # Insert to Collection
+                        # TODO Check if the song has already been added to the playlist
+                        curs.execute("""INSERT INTO "CollectionTrackList"("cid", "sid", "posNum") VALUES (%s, %s, %s) """, (cid, sid, posNum))
+                        conn.commit()
+                        curs.close()
+                        print("Song added to collection!")
                         
                     case "quit" | "q":
+                        curs.close()
                         break
         case "album":
            pass 
