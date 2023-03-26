@@ -7,6 +7,7 @@ def Help():
     register: creates an account
     login: logs in to account
     account: displays account information
+    friends: add, remove, and view friends
     collections: manipulate and listen to your collections
     search: lets you search for a song or album to add to collection or listen
     quit: ends program""")
@@ -82,6 +83,49 @@ def Login(conn) -> tuple[int, str]:
     print("Logged in as %s" % username)
     return result
 
+### Friends Command
+# Helper Function
+def FetchFriends(conn, uid):
+    curs = conn.cursor()
+    curs.execute("""SELECT f.uid2, u.username from "Friends" f, "User" u WHERE f.uid2 = u.uid AND uid1 = %s """, (uid,))
+    result = curs.fetchall()
+    curs.close()
+    return result
+    
+
+def Friends(conn, uid):
+    while True:
+        friends = FetchFriends(conn, uid)
+        friend_count = len(friends)
+        print("Friends list:")
+        for i in range(friend_count):
+            fid, username = friends[i]
+            print("%s: %s" % (i + 1, username))
+        print("""Available operations: 
+    add: add a new friend
+    remove: remove a friend from your friend list
+    quit: leave friends""")
+        command = input("Spotiphy Friends: ").lower().strip()
+        match command:
+            case "add" | "a":
+                email = input("Friend's Email: ")
+                curs = conn.cursor()
+                curs.execute("""SELECT uid FROM "User" WHERE email = %s""", (email,))
+                fid = curs.fetchone()[0]
+                curs.execute("""INSERT INTO "Friends"(uid1, uid2) VALUES(%s, %s)""", (uid, fid))
+                conn.commit()
+                curs.close()
+                print("Added Friend Successfully!")
+            case "remove" | "r":
+                friend_index = int(input("Select Friend Number: ")) - 1
+                fid, username = friends[friend_index]
+                curs = conn.cursor()
+                curs.execute("""DELETE FROM "Friends" WHERE uid1 = %s AND uid2 = %s""", (uid, fid))
+                conn.commit()
+                curs.close()
+            case "quit" | "q":
+                print()
+                return
 ### Collections Command
 
 def Collections(conn, uid):

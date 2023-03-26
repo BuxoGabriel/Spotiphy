@@ -60,6 +60,10 @@ def main():
                         else:
                             print("Logged in as %s" % global_username)
                             print("User ID: %s" % global_uid)
+                    case "friends" | "f":
+                        if not loggedIn: print("Not logged in")
+                        else:
+                            Commands.Friends(conn, uid)
                     case "collections" | "c":
                         if not loggedIn: 
                             print("You are not logged in")
