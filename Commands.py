@@ -87,7 +87,7 @@ def Login(conn) -> tuple[int, str]:
 # Helper Function
 def FetchFriends(conn, uid):
     curs = conn.cursor()
-    curs.execute("""SELECT f.uid2, u.username from "Friends" f, "User" u WHERE f.uid2 = u.uid uid1 = %s """, (uid,))
+    curs.execute("""SELECT f.uid2, u.username from "Friends" f, "User" u WHERE f.uid2 = u.uid AND uid1 = %s """, (uid,))
     result = curs.fetchall()
     curs.close()
     return result
@@ -108,9 +108,21 @@ def Friends(conn, uid):
         command = input("Spotiphy Friends: ").lower().strip()
         match command:
             case "add" | "a":
-                pass
+                email = input("Friend's Email: ")
+                curs = conn.cursor()
+                curs.execute("""SELECT uid FROM "User" WHERE email = %s""", (email,))
+                fid = curs.fetchone()[0]
+                curs.execute("""INSERT INTO "Friends"(uid1, uid2) VALUES(%s, %s)""", (uid, fid))
+                conn.commit()
+                curs.close()
+                print("Added Friend Successfully!")
             case "remove" | "r":
-                pass
+                friend_index = int(input("Select Friend Number: ")) - 1
+                fid, username = friends[friend_index]
+                curs = conn.cursor()
+                curs.execute("""DELETE FROM "Friends" WHERE uid1 = %s AND uid2 = %s""", (uid, fid))
+                conn.commit()
+                curs.close()
             case "quit" | "q":
                 print()
                 return
