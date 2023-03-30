@@ -1,4 +1,6 @@
 import psycopg2
+import hashlib
+import random
 import datetime
 import Helpers as h
 def Help():
@@ -17,6 +19,9 @@ def Help():
 # Returns uid and username in a tuple
 # Returns -1, "" if operation fails
 def Register(conn) -> tuple[int, str]:
+    ALPHABET = "0123456789QWERTYUIOPASDFGHJKLZXCVBNM"
+    SALT_LENGTH = 32
+
     print("Registering new user")
     curs = conn.cursor()
 
@@ -31,11 +36,22 @@ def Register(conn) -> tuple[int, str]:
         print("Register User Failed: Username Taken!")
         curs.close()
         return -1, ""
+    
     # Password
+    hasher = hashlib.sha3_256()
     password = input("Enter a password between 6 and 16 characters: ")
     passlength = len(password)
     while passlength < 6 or passlength > 16 or password.strip() == "":
         password = input("Enter a password between 6 and 16 characters: ")
+    salt = ""
+    for i in range(SALT_LENGTH):
+        salt += random.choice(ALPHABET)
+    # TODO if time make alternate chars
+    saltedPass = password + salt
+    hasher.update(saltedPass)
+    # Hashed password
+    password = hasher.hexdigest()
+
     # First Name
     firstName = input("Enter your first name: ")
     while firstName.strip() == "":
@@ -55,8 +71,8 @@ def Register(conn) -> tuple[int, str]:
     joinedDate = datetime.date.today()
 
     # Add user to Database
-    curs.execute("""INSERT INTO "User"("uid", "username", "password", "firstName", "lastName", "email", "joinedDate") VALUES (%s, %s, %s, %s, %s, %s, %s)""",
-                    (uid, username, password, firstName, lastName, email, joinedDate))
+    curs.execute("""INSERT INTO "User"("uid", "username", "password", "salt", "firstName", "lastName", "email", "joinedDate") VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""",
+                    (uid, username, password, salt, firstName, lastName, email, joinedDate))
     conn.commit()
     curs.close()
 
