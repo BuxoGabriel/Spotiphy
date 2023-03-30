@@ -3,6 +3,11 @@ import hashlib
 import random
 import datetime
 import Helpers as h
+
+HASHER = hashlib.sha3_256()
+ALPHABET = "0123456789QWERTYUIOPASDFGHJKLZXCVBNM"
+SALT_LENGTH = 32
+
 def Help():
     print("""The Commands Available are:
     help: gives this help command
@@ -19,8 +24,6 @@ def Help():
 # Returns uid and username in a tuple
 # Returns -1, "" if operation fails
 def Register(conn) -> tuple[int, str]:
-    ALPHABET = "0123456789QWERTYUIOPASDFGHJKLZXCVBNM"
-    SALT_LENGTH = 32
 
     print("Registering new user")
     curs = conn.cursor()
@@ -38,7 +41,6 @@ def Register(conn) -> tuple[int, str]:
         return -1, ""
     
     # Password
-    hasher = hashlib.sha3_256()
     password = input("Enter a password between 6 and 16 characters: ")
     passlength = len(password)
     while passlength < 6 or passlength > 16 or password.strip() == "":
@@ -48,9 +50,9 @@ def Register(conn) -> tuple[int, str]:
         salt += random.choice(ALPHABET)
     # TODO if time make alternate chars
     saltedPass = password + salt
-    hasher.update(saltedPass)
+    HASHER.update(saltedPass)
     # Hashed password
-    password = hasher.hexdigest()
+    password = HASHER.hexdigest()
 
     # First Name
     firstName = input("Enter your first name: ")
@@ -90,6 +92,9 @@ def Login(conn) -> tuple[int, str]:
     username = input("Enter your username: ")
     # TODO if salt method changes in register change here as well
     password = input("Enter your password: ") + salt
+    # Hash Password
+    HASHER.update(password)
+    password = HASHER.hexdigest()
                         
     curs.execute("""SELECT uid, username FROM "User" WHERE username = %s AND password = %s""", 
                     (username, password))
