@@ -84,9 +84,12 @@ def Register(conn) -> tuple[int, str]:
 # Returns uid and username of user
 # returns -1 "" if it cant find user in databasea            
 def Login(conn) -> tuple[int, str]:    
-    curs = conn.cursor()                    
+    curs = conn.cursor()       
+    curs.execute("""SELECT salt FROM "User" WHERE username = %s""", (username,))   
+    salt = curs.fetchone()[0]    
     username = input("Enter your username: ")
-    password = input("Enter your password: ")
+    # TODO if salt method changes in register change here as well
+    password = input("Enter your password: ") + salt
                         
     curs.execute("""SELECT uid, username FROM "User" WHERE username = %s AND password = %s""", 
                     (username, password))
