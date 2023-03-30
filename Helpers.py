@@ -99,3 +99,13 @@ def Listen(conn, uid, collection_list):
     print("Finished listening to %s. Total Time Elapsed: %s" % (collection[0], time_elapsed))
     conn.commit()
     curs.close()
+    
+    
+def findNumberofCollections(conn, uid):
+    curs = conn.cursor()
+    curs.execute("""SELECT c.name, c.cid FROM "UserCollection" uc, "Collection" c WHERE uc.cid = c.cid AND uc.uid = %s """,
+        (uid,))
+    # List of tuples(collection id, collection name)
+    collection_list = curs.fetchall()
+    amount_of_collections = len(collection_list)
+    return amount_of_collections

@@ -136,6 +136,7 @@ def Collections(conn, uid):
     create: create a new collection
     delete: delete a collection
     view: view a collection to add and delete songs
+    number: find how many collections you have
     listen: listen to all the songs in collection
     quit: leave collections""")
             command = input("Spotiphy Collections: ").lower().strip()
@@ -149,6 +150,8 @@ def Collections(conn, uid):
                     h.ViewCollection(conn, collection_list)
                 case "listen" | "l":
                     h.Listen(conn, uid, collection_list)
+                case "number" | "n":
+                    print("The number of collections you have right now is " + str(h.findNumberofCollections(conn, uid)) + ".")
                 case "quit" | "q":
                     return
                 case default:
