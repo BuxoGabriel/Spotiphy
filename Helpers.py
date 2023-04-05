@@ -1,22 +1,19 @@
 import datetime
 # Helper Functions
 
-# Returns tuple[col name, col id]
-def GatherCollections(conn, uid):
-    curs = conn.cursor()
-    curs.execute("""SELECT c.name, c.cid FROM "UserCollection" uc, "Collection" c WHERE uc.cid = c.cid AND uc.uid = %s """,
-        (uid,))
-    # List of tuples(collection id, collection name)
-    collection_list = curs.fetchall()
-    amount_of_collections = len(collection_list)
-    if amount_of_collections == 0:
-        print("You have no collections")
+# !count Returns tuple[col name, col id]
+# count Returns [(count)] count = result[0][0]
+def FetchCollections(conn, uid, count = False) -> list[tuple[int, str]]:
+    if count:
+        SQL = """SELECT COUNT(*) FROM "UserCollection" WHERE uid = %s"""
     else:
-        print("Your collections:")
-        for i in range(amount_of_collections):
-            print("%s: %s" % (i + 1, collection_list[i][0]))
+        SQL = """SELECT c.name, c.cid FROM "UserCollection" uc, "Collection" c WHERE uc.cid = c.cid AND uc.uid = %s """
+    curs = conn.cursor()
+    curs.execute(SQL, (uid,))
+    # List of tuples(collection id, collection name)
+    result = curs.fetchall()
     curs.close()
-    return collection_list
+    return result
 
 def CreateCollection(conn, uid):
     curs = conn.cursor()
@@ -36,6 +33,7 @@ def CreateCollection(conn, uid):
     conn.commit()
     curs.close()
     print("Operation successful!")
+    return
 
 def DeleteCollection(conn, collection_list): 
     collection_number = int(input("Select Collection number: ")) - 1
@@ -54,9 +52,10 @@ def DeleteCollection(conn, collection_list):
     conn.commit()
     curs.close()
     print("Deleted Collection successfully!")
+    return
 
 # Helper Function
-def fetchTracklist(conn, collection_list):
+def FetchTracklist(conn, collection_list):
     curs = conn.cursor()
 
     collection_number = int(input("Select Collection number: ")) - 1
@@ -76,7 +75,7 @@ def fetchTracklist(conn, collection_list):
     return tracklist, collection
 
 def ViewCollection(conn, collection_list):
-    tracklist, collection = fetchTracklist(conn, collection_list)
+    tracklist, collection = FetchTracklist(conn, collection_list)
     amount_of_songs = len(tracklist)
     print("Tracklist for Collection: %s" % collection[0]) #col[0] is col name
     for i in range(amount_of_songs):
@@ -85,7 +84,7 @@ def ViewCollection(conn, collection_list):
     return
 
 def Listen(conn, uid, collection_list):
-    tracklist, collection = fetchTracklist(conn, collection_list)
+    tracklist, collection = FetchTracklist(conn, collection_list)
     amount_of_songs = len(tracklist)
     print("You are listening to %s" % collection[0])
     curs = conn.cursor()
@@ -99,3 +98,31 @@ def Listen(conn, uid, collection_list):
     print("Finished listening to %s. Total Time Elapsed: %s" % (collection[0], time_elapsed))
     conn.commit()
     curs.close()
+
+
+# !count Returns tuple[friend id, friend name]
+# count Returns [(count)] count = result[0][0]
+def FetchFollowing(conn, uid, count = False) -> list[tuple[int, str]]:
+    if count:
+        SQL = """SELECT COUNT(*) FROM "Friends" WHERE uid1 = %s"""
+    else:
+        SQL = """SELECT u.username, f.uid2 from "Friends" f, "User" u WHERE u.uid = f.uid2 AND uid1 = %s"""
+    curs = conn.cursor()
+    curs.execute(SQL, (uid,))
+    result = curs.fetchall()
+    curs.close()
+    return result
+
+
+# !count Returns tuple[friend id, friend name]
+# count Returns [(count)] count = result[0][0]
+def FetchFollowers(conn, uid, count = False) -> list[tuple[int, str]]:
+    if count:
+        SQL = """SELECT COUNT(*) FROM "Friends" WHERE uid2 = %s"""
+    else:
+        SQL = """SELECT u.username, f.uid1 from "Friends" f, "User" u WHERE u.uid = f.uid1 AND uid2 = %s"""
+    curs = conn.cursor()
+    curs.execute(SQL, (uid,))
+    result = curs.fetchall()
+    curs.close()
+    return result

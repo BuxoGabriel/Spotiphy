@@ -101,18 +101,9 @@ def Login(conn) -> tuple[int, str]:
     return result
 
 ### Friends Command
-# Helper Function
-def FetchFriends(conn, uid):
-    curs = conn.cursor()
-    curs.execute("""SELECT f.uid2, u.username from "Friends" f, "User" u WHERE f.uid2 = u.uid AND uid1 = %s """, (uid,))
-    result = curs.fetchall()
-    curs.close()
-    return result
-    
-
 def Friends(conn, uid):
     while True:
-        friends = FetchFriends(conn, uid)
+        friends = h.FetchFollowing(conn, uid)
         friend_count = len(friends)
         print("Friends list:")
         for i in range(friend_count):
@@ -147,8 +138,14 @@ def Friends(conn, uid):
 
 def Collections(conn, uid):
     try:
-        collection_list = h.GatherCollections(conn, uid)
+        collection_list = h.FetchCollections(conn, uid)
         while True:
+            # Print Collections
+            print("Collections:")
+            for i in range(len(collection_list)):
+                print("%s. %s" % (i, Collections[0][0]))
+            
+            # Print available commands
             print("""Available operations:
     create: create a new collection
     delete: delete a collection
@@ -159,9 +156,10 @@ def Collections(conn, uid):
             match command:
                 case "create" | "c":
                     h.CreateCollection(conn, uid)
-                    collection_list = h.GatherCollections(conn, uid)
+                    collection_list = h.FetchCollections()
                 case "delete" | "d":
                     h.DeleteCollection(conn, collection_list)
+                    collection_list = h.FetchCollections()
                 case "view" | "v":
                     h.ViewCollection(conn, collection_list)
                 case "listen" | "l":
@@ -238,7 +236,7 @@ def Search(conn, loggedIn, uid):
                         song_selected = int(input("Select a song: ")) - 1
                         sid = results[song_selected][3]
                         # Get cid
-                        user_collections = h.GatherCollections(conn, uid)
+                        user_collections = h.FetchCollections(conn, uid)
                         collection_number = int(input("Select Collection number: ")) - 1
                         cid = user_collections[collection_number][1]
                         # Get posNum
@@ -270,3 +268,14 @@ def Search(conn, loggedIn, uid):
         case "album":
            # TODO
            pass 
+        
+def Account(conn: psycopg2.connection, uid, username):
+    numFollowing = h.FetchFollowing(conn, uid, count=True)[0][0]
+    numFollowers = h.FetchFollowers(conn, uid, count=True)[0][0]
+    numCollections = h.FetchCollections(conn, uid, count=True)[0][0]
+    print("Logged in as %s" % uid)
+    print("User ID: %s" % username)
+    print("Following:  %s" % numFollowing)
+    print("Followers: %s" % numFollowers)
+    print("Collections: %s" % numCollections)
+

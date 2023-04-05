@@ -44,26 +44,25 @@ def main():
                     case "help" | "h":
                         Commands.Help()
                     case "register" | "r":
-                        uid, username = Commands.Register(conn)
-                        if uid != -1:
+                        _uid, _username = Commands.Register(conn)
+                        if _uid != -1:
                             loggedIn = True
-                            global_uid = uid
-                            global_username = username
+                            global_uid = _uid
+                            global_username = _username
                     case "login" | "l":
-                        uid, username = Commands.Login(conn)
-                        if uid != -1:
+                        _uid, _username = Commands.Login(conn)
+                        if _uid != -1:
                             loggedIn = True
-                            global_uid = uid
-                            global_username = username
+                            global_uid = _uid
+                            global_username = _username
                     case "account" | "a":
                         if not loggedIn: print("Not logged in")
                         else:
-                            print("Logged in as %s" % global_username)
-                            print("User ID: %s" % global_uid)
+                            Commands.Account(conn, global_uid, global_username)
                     case "friends" | "f":
                         if not loggedIn: print("Not logged in")
                         else:
-                            Commands.Friends(conn, uid)
+                            Commands.Friends(conn, global_uid)
                     case "collections" | "c":
                         if not loggedIn: 
                             print("You are not logged in")
