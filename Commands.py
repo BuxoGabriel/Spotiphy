@@ -5,8 +5,6 @@ import datetime
 import Helpers as h
 
 HASHER = hashlib.sha3_256()
-ALPHABET = "0123456789QWERTYUIOPASDFGHJKLZXCVBNM"
-SALT_LENGTH = 32
 
 def Help():
     print("""The Commands Available are:
@@ -45,12 +43,9 @@ def Register(conn) -> tuple[int, str]:
     passlength = len(password)
     while passlength < 6 or passlength > 16 or password.strip() == "":
         password = input("Enter a password between 6 and 16 characters: ")
-    salt = ""
-    for i in range(SALT_LENGTH):
-        salt += random.choice(ALPHABET)
     # TODO if time make alternate chars
-    saltedPass = password + salt
-    HASHER.update(saltedPass)
+    saltedPass = password + username
+    HASHER.update(saltedPass.encode('utf-8'))
     # Hashed password
     password = HASHER.hexdigest()
 
@@ -73,8 +68,8 @@ def Register(conn) -> tuple[int, str]:
     joinedDate = datetime.date.today()
 
     # Add user to Database
-    curs.execute("""INSERT INTO "User"("uid", "username", "password", "salt", "firstName", "lastName", "email", "joinedDate") VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""",
-                    (uid, username, password, salt, firstName, lastName, email, joinedDate))
+    curs.execute("""INSERT INTO "User"("uid", "username", "password", "firstName", "lastName", "email", "joinedDate") VALUES (%s, %s, %s, %s, %s, %s, %s)""",
+                    (uid, username, password, firstName, lastName, email, joinedDate))
     conn.commit()
     curs.close()
 
@@ -87,13 +82,11 @@ def Register(conn) -> tuple[int, str]:
 # returns -1 "" if it cant find user in databasea            
 def Login(conn) -> tuple[int, str]:    
     curs = conn.cursor()       
-    curs.execute("""SELECT salt FROM "User" WHERE username = %s""", (username,))   
-    salt = curs.fetchone()[0]    
     username = input("Enter your username: ")
     # TODO if salt method changes in register change here as well
-    password = input("Enter your password: ") + salt
+    password = input("Enter your password: ") + username
     # Hash Password
-    HASHER.update(password)
+    HASHER.update(password.encode('utf-8'))
     password = HASHER.hexdigest()
                         
     curs.execute("""SELECT uid, username FROM "User" WHERE username = %s AND password = %s""", 
