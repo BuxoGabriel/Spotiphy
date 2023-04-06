@@ -34,7 +34,7 @@ def main():
 
             Commands.Help()
             while True:
-                command = input("Spotiphy: ").lower()
+                command = input("\nSpotiphy: ").lower()
                 if command == "":
                     continue
 

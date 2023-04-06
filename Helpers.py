@@ -106,7 +106,7 @@ def FetchFollowing(conn, uid, count = False) -> list[tuple[int, str]]:
     if count:
         SQL = """SELECT COUNT(*) FROM "Friends" WHERE uid1 = %s"""
     else:
-        SQL = """SELECT u.username, f.uid2 from "Friends" f, "User" u WHERE u.uid = f.uid2 AND uid1 = %s"""
+        SQL = """SELECT f.uid2, u.username FROM"Friends" f, "User" u WHERE u.uid = f.uid2 AND uid1 = %s"""
     curs = conn.cursor()
     curs.execute(SQL, (uid,))
     result = curs.fetchall()
@@ -120,7 +120,7 @@ def FetchFollowers(conn, uid, count = False) -> list[tuple[int, str]]:
     if count:
         SQL = """SELECT COUNT(*) FROM "Friends" WHERE uid2 = %s"""
     else:
-        SQL = """SELECT u.username, f.uid1 from "Friends" f, "User" u WHERE u.uid = f.uid1 AND uid2 = %s"""
+        SQL = """SELECT f.uid1, u.username FROM "Friends" f, "User" u WHERE u.uid = f.uid1 AND uid2 = %s"""
     curs = conn.cursor()
     curs.execute(SQL, (uid,))
     result = curs.fetchall()
