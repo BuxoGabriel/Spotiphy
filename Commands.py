@@ -1,6 +1,11 @@
 import psycopg2
+import hashlib
+import random
 import datetime
 import Helpers as h
+
+HASHER = hashlib.sha3_256()
+
 def Help():
     print("""The Commands Available are:
     help: gives this help command
@@ -17,6 +22,7 @@ def Help():
 # Returns uid and username in a tuple
 # Returns -1, "" if operation fails
 def Register(conn) -> tuple[int, str]:
+
     print("Registering new user")
     curs = conn.cursor()
 
@@ -31,11 +37,18 @@ def Register(conn) -> tuple[int, str]:
         print("Register User Failed: Username Taken!")
         curs.close()
         return -1, ""
+    
     # Password
     password = input("Enter a password between 6 and 16 characters: ")
     passlength = len(password)
     while passlength < 6 or passlength > 16 or password.strip() == "":
         password = input("Enter a password between 6 and 16 characters: ")
+    # TODO if time make alternate chars
+    saltedPass = password + username
+    HASHER.update(saltedPass.encode('utf-8'))
+    # Hashed password
+    password = HASHER.hexdigest()
+
     # First Name
     firstName = input("Enter your first name: ")
     while firstName.strip() == "":
@@ -68,9 +81,13 @@ def Register(conn) -> tuple[int, str]:
 # Returns uid and username of user
 # returns -1 "" if it cant find user in databasea            
 def Login(conn) -> tuple[int, str]:    
-    curs = conn.cursor()                    
+    curs = conn.cursor()       
     username = input("Enter your username: ")
-    password = input("Enter your password: ")
+    # TODO if salt method changes in register change here as well
+    password = input("Enter your password: ") + username
+    # Hash Password
+    HASHER.update(password.encode('utf-8'))
+    password = HASHER.hexdigest()
                         
     curs.execute("""SELECT uid, username FROM "User" WHERE username = %s AND password = %s""", 
                     (username, password))
