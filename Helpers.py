@@ -99,7 +99,6 @@ def Listen(conn, uid, collection_list):
     conn.commit()
     curs.close()
 
-
 # !count Returns tuple[friend id, friend name]
 # count Returns [(count)] count = result[0][0]
 def FetchFollowing(conn, uid, count = False) -> list[tuple[int, str]]:
@@ -113,7 +112,6 @@ def FetchFollowing(conn, uid, count = False) -> list[tuple[int, str]]:
     curs.close()
     return result
 
-
 # !count Returns tuple[friend id, friend name]
 # count Returns [(count)] count = result[0][0]
 def FetchFollowers(conn, uid, count = False) -> list[tuple[int, str]]:
@@ -126,3 +124,12 @@ def FetchFollowers(conn, uid, count = False) -> list[tuple[int, str]]:
     result = curs.fetchall()
     curs.close()
     return result
+    
+def findNumberofCollections(conn, uid):
+    curs = conn.cursor()
+    curs.execute("""SELECT c.name, c.cid FROM "UserCollection" uc, "Collection" c WHERE uc.cid = c.cid AND uc.uid = %s """,
+        (uid,))
+    # List of tuples(collection id, collection name)
+    collection_list = curs.fetchall()
+    amount_of_collections = len(collection_list)
+    return amount_of_collections
