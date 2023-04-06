@@ -7,7 +7,7 @@ import Helpers as h
 HASHER = hashlib.sha3_256()
 
 def Help():
-    print("""The Commands Available are:
+    print("""\nThe Commands Available are:
     help: gives this help command
     register: creates an account
     login: logs in to account
@@ -22,8 +22,7 @@ def Help():
 # Returns uid and username in a tuple
 # Returns -1, "" if operation fails
 def Register(conn) -> tuple[int, str]:
-
-    print("Registering new user")
+    print("\nRegistering new user")
     curs = conn.cursor()
 
     # Gather User Info Input
@@ -81,6 +80,7 @@ def Register(conn) -> tuple[int, str]:
 # Returns uid and username of user
 # returns -1 "" if it cant find user in databasea            
 def Login(conn) -> tuple[int, str]:    
+    print("\nLogging in user")
     curs = conn.cursor()       
     username = input("Enter your username: ")
     # TODO if salt method changes in register change here as well
@@ -101,24 +101,15 @@ def Login(conn) -> tuple[int, str]:
     return result
 
 ### Friends Command
-# Helper Function
-def FetchFriends(conn, uid):
-    curs = conn.cursor()
-    curs.execute("""SELECT f.uid2, u.username from "Friends" f, "User" u WHERE f.uid2 = u.uid AND uid1 = %s """, (uid,))
-    result = curs.fetchall()
-    curs.close()
-    return result
-    
-
 def Friends(conn, uid):
     while True:
-        friends = FetchFriends(conn, uid)
+        friends = h.FetchFollowing(conn, uid)
         friend_count = len(friends)
         print("Friends list:")
         for i in range(friend_count):
             fid, username = friends[i]
             print("%s: %s" % (i + 1, username))
-        print("""Available operations: 
+        print("""\nAvailable operations: 
     add: add a new friend
     remove: remove a friend from your friend list
     quit: leave friends""")
@@ -128,28 +119,39 @@ def Friends(conn, uid):
                 email = input("Friend's Email: ")
                 curs = conn.cursor()
                 curs.execute("""SELECT uid FROM "User" WHERE email = %s""", (email,))
-                fid = curs.fetchone()[0]
+                fid = curs.fetchone()
+                if fid == None:
+                    print("User with this email not found!")
+                    continue
+                fid = fid[0]
                 curs.execute("""INSERT INTO "Friends"(uid1, uid2) VALUES(%s, %s)""", (uid, fid))
                 conn.commit()
                 curs.close()
                 print("Added Friend Successfully!")
             case "remove" | "r":
                 friend_index = int(input("Select Friend Number: ")) - 1
+                if(friend_index >= len(friends)):
+                    print("Friend %s does not exist" % friend_index)
                 fid, username = friends[friend_index]
                 curs = conn.cursor()
                 curs.execute("""DELETE FROM "Friends" WHERE uid1 = %s AND uid2 = %s""", (uid, fid))
                 conn.commit()
                 curs.close()
             case "quit" | "q":
-                print()
                 return
-### Collections Command
 
+### Collections Command
 def Collections(conn, uid):
     try:
-        collection_list = h.GatherCollections(conn, uid)
+        collection_list = h.FetchCollections(conn, uid)
         while True:
-            print("""Available operations:
+            # Print Collections
+            print("\nCollections:")
+            for i in range(len(collection_list)):
+                print("%s. %s" % (i + 1, collection_list[i][0]))
+            
+            # Print available commands
+            print("""\nAvailable operations:
     create: create a new collection
     delete: delete a collection
     view: view a collection to add and delete songs
@@ -160,9 +162,10 @@ def Collections(conn, uid):
             match command:
                 case "create" | "c":
                     h.CreateCollection(conn, uid)
-                    collection_list = h.GatherCollections(conn, uid)
+                    collection_list = h.FetchCollections(conn, uid)
                 case "delete" | "d":
                     h.DeleteCollection(conn, collection_list)
+                    collection_list = h.FetchCollections(conn, uid)
                 case "view" | "v":
                     h.ViewCollection(conn, collection_list)
                 case "listen" | "l":
@@ -179,7 +182,7 @@ def Collections(conn, uid):
 
 ### Search Command
 def Search(conn, loggedIn, uid):
-    category = input("What would you like to search for(song, album): ")
+    category = input("\nWhat would you like to search for(song, album): ")
     match category:
         case "song":
             search_type = input("Search by(name, artist, album, and genre) or type quit: ")
@@ -216,18 +219,21 @@ def Search(conn, loggedIn, uid):
                     curs.close()
                     return
             results = curs.fetchall()
-            song_amount = len(results)
-            for i in range(song_amount):
-                artist, title, album, sid, song_length = results[i]
-                print(
-                    (((((str(i + 1) + ": ").ljust(10, " ")
-                      + " Artist: " + artist).ljust(50, " ") 
-                      + " Title: " + title).ljust(75, " ")
-                     + " Album: " + album).ljust(100, " ")
-                     + " Song length: " + str(song_length)).ljust(150, " ")
-                )
+
             while True:
-                print("""Available operations:
+                # Print Songs
+                song_amount = len(results)
+                print("\nFound Songs:")
+                for i in range(song_amount):
+                    artist, title, album, sid, song_length = results[i]
+                    print(
+                        (((((str(i + 1) + ": ").ljust(10, " ")
+                        + " Artist: " + artist).ljust(50, " ") 
+                        + " Title: " + title).ljust(75, " ")
+                        + " Album: " + album).ljust(100, " ")
+                        + " Song length: " + str(song_length)).ljust(150, " ")
+                    )
+                print("""\nAvailable operations:
     add: adds a song to one of your collections
     listen: listen to a song
     quit: leave search song""")
@@ -240,8 +246,13 @@ def Search(conn, loggedIn, uid):
                         # Get sid
                         song_selected = int(input("Select a song: ")) - 1
                         sid = results[song_selected][3]
+                        
+                        # Show Collections
+                        user_collections = h.FetchCollections(conn, uid)
+                        for i in range(len(user_collections)):
+                            print("%s. %s" % (i + 1, user_collections[i][0]))
+
                         # Get cid
-                        user_collections = h.GatherCollections(conn, uid)
                         collection_number = int(input("Select Collection number: ")) - 1
                         cid = user_collections[collection_number][1]
                         # Get posNum
@@ -255,7 +266,6 @@ def Search(conn, loggedIn, uid):
                         # TODO Check if the song has already been added to the playlist
                         curs.execute("""INSERT INTO "CollectionTrackList"("cid", "sid", "posNum") VALUES (%s, %s, %s) """, (cid, sid, posNum))
                         conn.commit()
-                        curs.close()
                         print("Song added to collection!")
                     case "listen" | "l":
                         # Get sid
@@ -273,3 +283,13 @@ def Search(conn, loggedIn, uid):
         case "album":
            # TODO
            pass 
+        
+def Account(conn, uid, username):
+    numFollowing = h.FetchFollowing(conn, uid, count=True)[0][0]
+    numFollowers = h.FetchFollowers(conn, uid, count=True)[0][0]
+    numCollections = h.FetchCollections(conn, uid, count=True)[0][0]
+    print("\nLogged in as %s" % uid)
+    print("User ID: %s" % username)
+    print("Following:  %s" % numFollowing)
+    print("Followers: %s" % numFollowers)
+    print("Collections: %s" % numCollections)
