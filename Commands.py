@@ -4,8 +4,6 @@ import random
 import datetime
 import Helpers as h
 
-HASHER = hashlib.sha3_256()
-
 def Help():
     print("""\nThe Commands Available are:
     help: gives this help command
@@ -15,6 +13,7 @@ def Help():
     friends: add, remove, and view friends
     collections: manipulate and listen to your collections
     search: lets you search for a song or album to add to collection or listen
+    recommend: enjoy custom currated collections for you
     quit: ends program""")
 
 ### Register Command
@@ -42,11 +41,12 @@ def Register(conn) -> tuple[int, str]:
     passlength = len(password)
     while passlength < 6 or passlength > 16 or password.strip() == "":
         password = input("Enter a password between 6 and 16 characters: ")
+        passlength = len(password)
     # TODO if time make alternate chars
-    saltedPass = password + username
-    HASHER.update(saltedPass.encode('utf-8'))
-    # Hashed password
-    password = HASHER.hexdigest()
+    password += username
+    print(password)
+    password = hashlib.sha3_512(password.encode()).hexdigest()
+    print(password)
 
     # First Name
     firstName = input("Enter your first name: ")
@@ -81,14 +81,16 @@ def Register(conn) -> tuple[int, str]:
 # returns -1 "" if it cant find user in databasea            
 def Login(conn) -> tuple[int, str]:    
     print("\nLogging in user")
-    curs = conn.cursor()       
+    curs = conn.cursor()   
+        
     username = input("Enter your username: ")
     # TODO if salt method changes in register change here as well
     password = input("Enter your password: ") + username
     # Hash Password
-    HASHER.update(password.encode('utf-8'))
-    password = HASHER.hexdigest()
-                        
+    print(password)
+    password = hashlib.sha3_512(password.encode()).hexdigest()
+    print(password)
+
     curs.execute("""SELECT uid, username FROM "User" WHERE username = %s AND password = %s""", 
                     (username, password))
 
@@ -158,7 +160,7 @@ def Collections(conn, uid):
     number: find how many collections you have
     listen: listen to all the songs in collection
     quit: leave collections""")
-            command = input("Spotiphy Collections: ").lower().strip()
+            command = input("Spotiphy Collections: ").lower()
             match command:
                 case "create" | "c":
                     h.CreateCollection(conn, uid)
@@ -293,3 +295,42 @@ def Account(conn, uid, username):
     print("Following:  %s" % numFollowing)
     print("Followers: %s" % numFollowers)
     print("Collections: %s" % numCollections)
+
+def Recommend(conn, uid):
+    while(True):
+        print("""\nWe have currated a list of collections for you to listen to.
+In order to view a collection simply select one from the following list by its number(or type q to quit):
+1. Friends' Recent Listens""")
+        command = input("\nSpotiphy Recommendations: ").lower()
+        match command:
+            case "1":
+                collection = h.FetchTop50(conn, uid)
+            case "q":
+                break
+            case default:
+                continue
+        collection_length = len(collection)
+        for i in range(collection_length):
+            print("%s. %s" % (i + 1, collection[i][0]))
+        print("""\nAvailable operations: 
+listen: listen to this collection
+add: add this to my collections
+ignore: go back to Spotiphy Recommendations""")
+        command = input("\nSpotiphy Collection View: ").lower()
+        match command:
+            case "add":
+                cid = h.CreateCollection(conn, uid)
+                curs = conn.cursor()
+                for i in range(collection_length):
+                    curs.execute("""INSERT INTO "CollectionTracklist"("cid", "sid", "posNum") VALUES (%s, %s, %s) """,
+                        (cid, collection[i][1], i + 1))
+                curs.commit()
+                curs.close()
+                print("Added all songs to collection successfully!\n Operation Complete!")
+            case "listen":
+                h.ListenTracklist(conn, uid, collection)
+            
+            case default: 
+                pass
+                
+        
