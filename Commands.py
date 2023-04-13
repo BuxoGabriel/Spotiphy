@@ -4,8 +4,6 @@ import random
 import datetime
 import Helpers as h
 
-HASHER = hashlib.sha3_256()
-
 def Help():
     print("""\nThe Commands Available are:
     help: gives this help command
@@ -44,9 +42,7 @@ def Register(conn) -> tuple[int, str]:
         password = input("Enter a password between 6 and 16 characters: ")
     # TODO if time make alternate chars
     saltedPass = password + username
-    HASHER.update(saltedPass.encode('utf-8'))
-    # Hashed password
-    password = HASHER.hexdigest()
+    password = hashlib.sha3_512(password.encode()).hexdigest()
 
     # First Name
     firstName = input("Enter your first name: ")
@@ -86,8 +82,7 @@ def Login(conn) -> tuple[int, str]:
     # TODO if salt method changes in register change here as well
     password = input("Enter your password: ") + username
     # Hash Password
-    HASHER.update(password.encode('utf-8'))
-    password = HASHER.hexdigest()
+    password = hashlib.sha3_512(password.encode()).hexdigest()
                         
     curs.execute("""SELECT uid, username FROM "User" WHERE username = %s AND password = %s""", 
                     (username, password))
