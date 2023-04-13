@@ -280,6 +280,7 @@ def Search(conn, loggedIn, uid):
            pass 
         
 def Account(conn, uid, username):
+    print("ahhhhh")
     numFollowing = h.FetchFollowing(conn, uid, count=True)[0][0]
     numFollowers = h.FetchFollowers(conn, uid, count=True)[0][0]
     numCollections = h.FetchCollections(conn, uid, count=True)[0][0]
