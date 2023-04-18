@@ -298,3 +298,27 @@ def Account(conn, uid, username):
             case "collections" | "c":    
                 numCollections = h.FetchCollections(conn, uid, count=True)[0][0]
                 print("Collections: %s" % numCollections)
+            case "top" | "t":
+                print("""\nAvailable operations:
+                plays: show top 10 artists by most plays 
+                collections: show top 10 artists by additions to collections
+                both: show top 10 artists by a combination of most plays and collections
+                quit: leave top 10 artists command line""")
+                curs = conn.cursor()
+                t10c = input("Spotiphy Top 10 Artists: ")
+                match t10c:
+                    case  "plays" | "p":
+                        curs.execute("""SELECT name, COUNT(*) from (SELECT ars.uid, ars.sid, ars.arid, "Artist".name from (SELECT s.uid, s.sid, "SongArtist".arid  from (SELECT "User".uid, "ListenHistory".sid from "User"
+                                        INNER JOIN "ListenHistory" ON "User".uid = "ListenHistory".uid
+                                        ORDER BY uid) as s
+                                        INNER JOIN "SongArtist" ON s.sid = "SongArtist".sid) as ars
+                                        INNER JOIN "Artist" ON ars.arid = "Artist".arid
+                                        ORDER BY arid) as a
+                                        WHERE a.uid = %s
+                                        GROUP BY name
+                                        ORDER BY count(*) DESC
+                                        LIMIT 10""", (uid,))
+                        c = curs.fetchall()
+                        print(c)
+            case "quit" | "q":
+                break
