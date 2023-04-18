@@ -280,12 +280,21 @@ def Search(conn, loggedIn, uid):
            pass 
         
 def Account(conn, uid, username):
-    print("ahhhhh")
-    numFollowing = h.FetchFollowing(conn, uid, count=True)[0][0]
-    numFollowers = h.FetchFollowers(conn, uid, count=True)[0][0]
-    numCollections = h.FetchCollections(conn, uid, count=True)[0][0]
-    print("\nLogged in as %s" % uid)
-    print("User ID: %s" % username)
-    print("Following:  %s" % numFollowing)
-    print("Followers: %s" % numFollowers)
-    print("Collections: %s" % numCollections)
+    print("\nLogged in as %s" % username)
+    print("User ID: %s" % uid)
+    while True:
+        print("""\nAvailable operations:
+        followers: check how many people you follow and how many followers you have
+        collections: check how many collections you have
+        top: show the top 10 artists that the user listens to
+        quit: leave account profile""")
+        command = input("Spotiphy Account Profile: ")
+        match command:
+            case "followers" | "f":
+                numFollowing = h.FetchFollowing(conn, uid, count=True)[0][0]
+                numFollowers = h.FetchFollowers(conn, uid, count=True)[0][0]
+                print("Following:  %s" % numFollowing)
+                print("Followers: %s" % numFollowers)
+            case "collections" | "c":    
+                numCollections = h.FetchCollections(conn, uid, count=True)[0][0]
+                print("Collections: %s" % numCollections)
