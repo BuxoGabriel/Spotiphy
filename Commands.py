@@ -319,6 +319,9 @@ def Account(conn, uid, username):
                                         ORDER BY count(*) DESC
                                         LIMIT 10""", (uid,))
                         c = curs.fetchall()
-                        print(c)
+                        print("Your top 10 most played artists are:")
+                        for a in range(len(c)):
+                            print(str(a+1) + ". " + c[a][0])
+                        
             case "quit" | "q":
                 break
