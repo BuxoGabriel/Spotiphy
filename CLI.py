@@ -43,7 +43,7 @@ def main():
                         break
                     case "help" | "h":
                         Commands.Help()
-                    case "register" | "r":
+                    case "register" | "reg":
                         _uid, _username = Commands.Register(conn)
                         if _uid != -1:
                             loggedIn = True
@@ -71,6 +71,8 @@ def main():
                             Commands.Collections(conn, global_uid)
                     case "search" | "s":
                         Commands.Search(conn, loggedIn, global_uid)
+                    case "recommend" | "rec":
+                        Commands.Recommend(conn, global_uid)
                     case default:
                         print("Unrecognized command!")
     except Exception as e:
