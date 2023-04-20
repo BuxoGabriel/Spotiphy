@@ -44,9 +44,7 @@ def Register(conn) -> tuple[int, str]:
         passlength = len(password)
     # TODO if time make alternate chars
     password += username
-    print(password)
     password = hashlib.sha3_512(password.encode()).hexdigest()
-    print(password)
 
     # First Name
     firstName = input("Enter your first name: ")
@@ -87,9 +85,7 @@ def Login(conn) -> tuple[int, str]:
     # TODO if salt method changes in register change here as well
     password = input("Enter your password: ") + username
     # Hash Password
-    print(password)
     password = hashlib.sha3_512(password.encode()).hexdigest()
-    print(password)
 
     curs.execute("""SELECT uid, username FROM "User" WHERE username = %s AND password = %s""", 
                     (username, password))
@@ -322,9 +318,9 @@ ignore: go back to Spotiphy Recommendations""")
                 cid = h.CreateCollection(conn, uid)
                 curs = conn.cursor()
                 for i in range(collection_length):
-                    curs.execute("""INSERT INTO "CollectionTracklist"("cid", "sid", "posNum") VALUES (%s, %s, %s) """,
+                    curs.execute("""INSERT INTO "CollectionTrackList"("cid", "sid", "posNum") VALUES (%s, %s, %s) """,
                         (cid, collection[i][1], i + 1))
-                curs.commit()
+                conn.commit()
                 curs.close()
                 print("Added all songs to collection successfully!\n Operation Complete!")
             case "listen":

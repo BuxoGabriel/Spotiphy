@@ -32,7 +32,7 @@ def CreateCollection(conn, uid):
         (uid, cid, date_created))
     conn.commit()
     curs.close()
-    print("Operation successful!")
+    print("Create successful!")
     return cid
 
 def DeleteCollection(conn, collection_list: list[tuple[str, int]]): 
@@ -55,7 +55,7 @@ def DeleteCollection(conn, collection_list: list[tuple[str, int]]):
     return
 
 # Returns array of tuples(title, sid, posNum, songlength)
-def FetchTracklist(conn, collection_list: list[tuple[str, int]]) -> list[tuple[str, int, int, int]]:
+def FetchTracklist(conn, collection_list: list[tuple[str, int]]) -> tuple[list[tuple[str, int, int, int]], tuple[str, int]]:
     curs = conn.cursor()
 
     collection_number = int(input("Select Collection number: ")) - 1
@@ -66,7 +66,7 @@ def FetchTracklist(conn, collection_list: list[tuple[str, int]]) -> list[tuple[s
         return
     
     collection = collection_list[collection_number]
-    curs.execute("""SELECT s.title, s.sid, tl."posNum", s.songlength as pos FROM "Song" s, "CollectionTrackList" tl
+    curs.execute("""SELECT s.title, s.sid, tl."posNum" as pos, s.songlength FROM "Song" s, "CollectionTrackList" tl
         WHERE tl.sid = s.sid AND tl.cid = %s
         ORDER BY pos ASC""",
                     (collection[1],))
@@ -156,6 +156,8 @@ def ListenTracklist(conn, uid, collection: list[tuple[str, int, int]]):
         print("listening to %s..." % title)
         time_elapsed += songlen
         if(uid != -1):
-            curs.execute("""INSERT INTO "ListenHistory"(uid, sid, date) VALUES (%s, %s, %s) """ % (uid, sid, date))
-    print("Finished listening! Total Time Elapsed: %s" % (collection[0], time_elapsed))
+            curs.execute("""INSERT INTO "ListenHistory"(uid, sid, date) VALUES (%s, %s, %s) """, (uid, sid, date))
+    print("Finished listening! Total Time Elapsed: %s" % time_elapsed)
+    conn.commit()
+    curs.close()
     
