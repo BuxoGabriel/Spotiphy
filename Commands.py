@@ -322,6 +322,42 @@ def Account(conn, uid, username):
                         print("Your top 10 most played artists are:")
                         for a in range(len(c)):
                             print(str(a+1) + ". " + c[a][0])
-                        
+                            
+                    case  "collections" | "c":
+                        curs.execute("""SELECT name, COUNT(*) from (SELECT ucs.uid, a.name from (
+                        SELECT uu.uid, uu.cid, ct.sid from (SELECT u.uid, uc.cid from "User" as u
+                        INNER JOIN "UserCollection" uc on u.uid = uc.uid) as uu
+                        INNER JOIN "CollectionTrackList" ct ON uu.cid = ct.cid) as ucs
+                        INNER JOIN "SongArtist" sa ON sa.sid = ucs.sid
+                        INNER JOIN "Artist" a ON sa.arid = a.arid) as f
+                        WHERE f.uid = %s
+                        GROUP BY name
+                        ORDER BY count(*) DESC
+                        LIMIT 10""", (uid,))
+                        c = curs.fetchall()
+                        print("Your top 10 most played artists (from your collections) are:")
+                        for a in range(len(c)):
+                            print(str(a+1) + ". " + c[a][0])
+                            
+                    case  "both" | "b":
+                        curs.execute("""SELECT name, COUNT(*) from
+                        (SELECT u.uid, a.name from "User" as u
+                        INNER JOIN "UserCollection" uc on u.uid = uc.uid
+                        INNER JOIN "CollectionTrackList" ct ON uc.cid = ct.cid
+                        INNER JOIN "ListenHistory" lh ON u.uid = lh.uid
+                        INNER JOIN "SongArtist" sa ON sa.sid = ct.sid
+                        INNER JOIN "Artist" a ON sa.arid = a.arid) as f
+                        WHERE f.uid = '200'
+                        GROUP BY name
+                        ORDER BY count(*) DESC
+                        LIMIT 10""", (uid,))
+                        c = curs.fetchall()
+                        print("Your top 10 most played artists (from your collections) are:")
+                        for a in range(len(c)):
+                            print(str(a+1) + ". " + c[a][0])
+                            
+                    case "quit" | "q":
+                        break
+        
             case "quit" | "q":
                 break
