@@ -86,7 +86,6 @@ def Login(conn) -> tuple[int, str]:
     password = input("Enter your password: ") + username
     # Hash Password
     password = hashlib.sha3_512(password.encode()).hexdigest()
-
     curs.execute("""SELECT uid, username FROM "User" WHERE username = %s AND password = %s""", 
                     (username, password))
 
