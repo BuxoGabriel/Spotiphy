@@ -3,7 +3,7 @@ import datetime
 
 # !count Returns tuple[col name, col id]
 # count Returns [(count)] count = result[0][0]
-def FetchCollections(conn, uid, count = False) -> list[tuple[int, str]]:
+def FetchCollections(conn, uid, count = False) -> list[tuple[str, int]]:
     if count:
         SQL = """SELECT COUNT(*) FROM "UserCollection" WHERE uid = %s"""
     else:
@@ -32,10 +32,10 @@ def CreateCollection(conn, uid):
         (uid, cid, date_created))
     conn.commit()
     curs.close()
-    print("Operation successful!")
-    return
+    print("Create successful!")
+    return cid
 
-def DeleteCollection(conn, collection_list): 
+def DeleteCollection(conn, collection_list: list[tuple[str, int]]): 
     collection_number = int(input("Select Collection number: ")) - 1
     # error checking collection number value
     if collection_number not in range(len(collection_list)):
@@ -54,8 +54,8 @@ def DeleteCollection(conn, collection_list):
     print("Deleted Collection successfully!")
     return
 
-# Helper Function
-def FetchTracklist(conn, collection_list):
+# Returns array of tuples(title, sid, posNum, songlength)
+def FetchTracklist(conn, collection_list: list[tuple[str, int]]) -> tuple[list[tuple[str, int, int, int]], tuple[str, int]]:
     curs = conn.cursor()
 
     collection_number = int(input("Select Collection number: ")) - 1
@@ -66,7 +66,7 @@ def FetchTracklist(conn, collection_list):
         return
     
     collection = collection_list[collection_number]
-    curs.execute("""SELECT s.title, s.sid, tl."posNum", s.songlength as pos FROM "Song" s, "CollectionTrackList" tl
+    curs.execute("""SELECT s.title, s.sid, tl."posNum" as pos, s.songlength FROM "Song" s, "CollectionTrackList" tl
         WHERE tl.sid = s.sid AND tl.cid = %s
         ORDER BY pos ASC""",
                     (collection[1],))
@@ -74,7 +74,7 @@ def FetchTracklist(conn, collection_list):
     curs.close()
     return tracklist, collection
 
-def ViewCollection(conn, collection_list):
+def ViewCollection(conn, collection_list: list[tuple[str, int]]):
     tracklist, collection = FetchTracklist(conn, collection_list)
     amount_of_songs = len(tracklist)
     print("Tracklist for Collection: %s" % collection[0]) #col[0] is col name
@@ -133,3 +133,31 @@ def findNumberofCollections(conn, uid):
     collection_list = curs.fetchall()
     amount_of_collections = len(collection_list)
     return amount_of_collections
+
+# Gets the 50 most listened to songs amoung friends in the past 30 days
+def FetchTop50(conn, uid):
+    SQL = """
+    SELECT title, sid, songlength FROM "Song" WHERE sid in(
+    SELECT lh.sid FROM "Friends" f, "ListenHistory" lh 
+        WHERE f.uid1 = %s AND lh.date >= NOW() - INTERVAL '30 days'
+        GROUP BY lh.sid
+        ORDER BY COUNT(lh.sid) DESC
+        LIMIT 50) """
+    curs = conn.cursor()
+    curs.execute(SQL, (uid,))
+    result = curs.fetchall()
+    return result
+
+def ListenTracklist(conn, uid, collection: list[tuple[str, int, int]]):
+    curs = conn.cursor()
+    time_elapsed = 0
+    date = datetime.datetime.now()
+    for title, sid, songlen in collection:
+        print("listening to %s..." % title)
+        time_elapsed += songlen
+        if(uid != -1):
+            curs.execute("""INSERT INTO "ListenHistory"(uid, sid, date) VALUES (%s, %s, %s) """, (uid, sid, date))
+    print("Finished listening! Total Time Elapsed: %s" % time_elapsed)
+    conn.commit()
+    curs.close()
+    

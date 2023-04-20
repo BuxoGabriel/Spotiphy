@@ -13,6 +13,7 @@ def Help():
     friends: add, remove, and view friends
     collections: manipulate and listen to your collections
     search: lets you search for a song or album to add to collection or listen
+    recommend: enjoy custom currated collections for you
     quit: ends program""")
 
 ### Register Command
@@ -40,8 +41,9 @@ def Register(conn) -> tuple[int, str]:
     passlength = len(password)
     while passlength < 6 or passlength > 16 or password.strip() == "":
         password = input("Enter a password between 6 and 16 characters: ")
+        passlength = len(password)
     # TODO if time make alternate chars
-    saltedPass = password + username
+    password += username
     password = hashlib.sha3_512(password.encode()).hexdigest()
 
     # First Name
@@ -77,13 +79,13 @@ def Register(conn) -> tuple[int, str]:
 # returns -1 "" if it cant find user in databasea            
 def Login(conn) -> tuple[int, str]:    
     print("\nLogging in user")
-    curs = conn.cursor()       
+    curs = conn.cursor()   
+        
     username = input("Enter your username: ")
     # TODO if salt method changes in register change here as well
     password = input("Enter your password: ") + username
     # Hash Password
     password = hashlib.sha3_512(password.encode()).hexdigest()
-                        
     curs.execute("""SELECT uid, username FROM "User" WHERE username = %s AND password = %s""", 
                     (username, password))
 
@@ -153,7 +155,7 @@ def Collections(conn, uid):
     number: find how many collections you have
     listen: listen to all the songs in collection
     quit: leave collections""")
-            command = input("Spotiphy Collections: ").lower().strip()
+            command = input("Spotiphy Collections: ").lower()
             match command:
                 case "create" | "c":
                     h.CreateCollection(conn, uid)
@@ -280,84 +282,50 @@ def Search(conn, loggedIn, uid):
            pass 
         
 def Account(conn, uid, username):
-    print("\nLogged in as %s" % username)
-    print("User ID: %s" % uid)
-    while True:
-        print("""\nAvailable operations:
-        followers: check how many people you follow and how many followers you have
-        collections: check how many collections you have
-        top: show the top 10 artists that the user listens to
-        quit: leave account profile""")
-        command = input("Spotiphy Account Profile: ")
+    numFollowing = h.FetchFollowing(conn, uid, count=True)[0][0]
+    numFollowers = h.FetchFollowers(conn, uid, count=True)[0][0]
+    numCollections = h.FetchCollections(conn, uid, count=True)[0][0]
+    print("\nLogged in as %s" % uid)
+    print("User ID: %s" % username)
+    print("Following:  %s" % numFollowing)
+    print("Followers: %s" % numFollowers)
+    print("Collections: %s" % numCollections)
+
+def Recommend(conn, uid):
+    while(True):
+        print("""\nWe have currated a list of collections for you to listen to.
+In order to view a collection simply select one from the following list by its number(or type q to quit):
+1. Friends' Recent Listens""")
+        command = input("\nSpotiphy Recommendations: ").lower()
         match command:
-            case "followers" | "f":
-                numFollowing = h.FetchFollowing(conn, uid, count=True)[0][0]
-                numFollowers = h.FetchFollowers(conn, uid, count=True)[0][0]
-                print("Following:  %s" % numFollowing)
-                print("Followers: %s" % numFollowers)
-            case "collections" | "c":    
-                numCollections = h.FetchCollections(conn, uid, count=True)[0][0]
-                print("Collections: %s" % numCollections)
-            case "top" | "t":
-                print("""\nAvailable operations:
-                plays: show top 10 artists by most plays 
-                collections: show top 10 artists by additions to collections
-                both: show top 10 artists by a combination of most plays and collections
-                quit: leave top 10 artists command line""")
-                curs = conn.cursor()
-                t10c = input("Spotiphy Top 10 Artists: ")
-                match t10c:
-                    case  "plays" | "p":
-                        curs.execute("""SELECT name, COUNT(*) from (SELECT ars.uid, ars.sid, ars.arid, "Artist".name from (SELECT s.uid, s.sid, "SongArtist".arid  from (SELECT "User".uid, "ListenHistory".sid from "User"
-                                        INNER JOIN "ListenHistory" ON "User".uid = "ListenHistory".uid
-                                        ORDER BY uid) as s
-                                        INNER JOIN "SongArtist" ON s.sid = "SongArtist".sid) as ars
-                                        INNER JOIN "Artist" ON ars.arid = "Artist".arid
-                                        ORDER BY arid) as a
-                                        WHERE a.uid = %s
-                                        GROUP BY name
-                                        ORDER BY count(*) DESC
-                                        LIMIT 10""", (uid,))
-                        c = curs.fetchall()
-                        print("Your top 10 most played artists are:")
-                        for a in range(len(c)):
-                            print(str(a+1) + ". " + c[a][0])
-                            
-                    case  "collections" | "c":
-                        curs.execute("""SELECT name, COUNT(*) from (SELECT ucs.uid, a.name from (
-                        SELECT uu.uid, uu.cid, ct.sid from (SELECT u.uid, uc.cid from "User" as u
-                        INNER JOIN "UserCollection" uc on u.uid = uc.uid) as uu
-                        INNER JOIN "CollectionTrackList" ct ON uu.cid = ct.cid) as ucs
-                        INNER JOIN "SongArtist" sa ON sa.sid = ucs.sid
-                        INNER JOIN "Artist" a ON sa.arid = a.arid) as f
-                        WHERE f.uid = %s
-                        GROUP BY name
-                        ORDER BY count(*) DESC
-                        LIMIT 10""", (uid,))
-                        c = curs.fetchall()
-                        print("Your top 10 most played artists (from your collections) are:")
-                        for a in range(len(c)):
-                            print(str(a+1) + ". " + c[a][0])
-                            
-                    case  "both" | "b":
-                        curs.execute("""SELECT name, COUNT(*) from
-                        (SELECT u.uid, a.name from "User" as u
-                        INNER JOIN "UserCollection" uc on u.uid = uc.uid
-                        INNER JOIN "CollectionTrackList" ct ON uc.cid = ct.cid
-                        INNER JOIN "ListenHistory" lh ON u.uid = lh.uid
-                        INNER JOIN "SongArtist" sa ON sa.sid = ct.sid
-                        INNER JOIN "Artist" a ON sa.arid = a.arid) as f
-                        WHERE f.uid = '200'
-                        GROUP BY name
-                        ORDER BY count(*) DESC
-                        LIMIT 10""", (uid,))
-                        c = curs.fetchall()
-                        print("Your top 10 most played artists (from your collections) are:")
-                        for a in range(len(c)):
-                            print(str(a+1) + ". " + c[a][0])
-                            
-                    case "quit" | "q":
-                        break
-        
-            case "quit" | "q":
+            case "1":
+                collection = h.FetchTop50(conn, uid)
+            case "q":
                 break
+            case default:
+                continue
+        collection_length = len(collection)
+        for i in range(collection_length):
+            print("%s. %s" % (i + 1, collection[i][0]))
+        print("""\nAvailable operations: 
+listen: listen to this collection
+add: add this to my collections
+ignore: go back to Spotiphy Recommendations""")
+        command = input("\nSpotiphy Collection View: ").lower()
+        match command:
+            case "add":
+                cid = h.CreateCollection(conn, uid)
+                curs = conn.cursor()
+                for i in range(collection_length):
+                    curs.execute("""INSERT INTO "CollectionTrackList"("cid", "sid", "posNum") VALUES (%s, %s, %s) """,
+                        (cid, collection[i][1], i + 1))
+                conn.commit()
+                curs.close()
+                print("Added all songs to collection successfully!\n Operation Complete!")
+            case "listen":
+                h.ListenTracklist(conn, uid, collection)
+            
+            case default: 
+                pass
+                
+        
