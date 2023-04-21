@@ -14,6 +14,7 @@ def Help():
     collections: manipulate and listen to your collections
     search: lets you search for a song or album to add to collection or listen
     recommend: enjoy custom currated collections for you
+    genre: discover the most popular genres through a given month
     quit: ends program""")
 
 ### Register Command
@@ -154,6 +155,7 @@ def Collections(conn, uid):
     view: view a collection to add and delete songs
     number: find how many collections you have
     listen: listen to all the songs in collection
+
     quit: leave collections""")
             command = input("Spotiphy Collections: ").lower()
             match command:
@@ -400,5 +402,22 @@ ignore: go back to Spotiphy Recommendations""")
             
             case default: 
                 pass
-                
+
+def popularGenre(conn, uid):
+    inp = input("Enter a number corresponding to a month: ")
+    curs = conn.cursor()
+    curs.execute("""SELECT name, COUNT(*) from (SELECT date_part('month', "releaseDate"), g.name FROM "Album" as a
+                    INNER JOIN "AlbumGenre" ag on ag.aid = a.aid
+                    INNER JOIN "Genre" g on g.gid = ag.gid
+                    WHERE date_part('month', "releaseDate") = %s) as d
+
+                    GROUP BY name
+                    ORDER BY COUNT(*) DESC
+                    LIMIT 5
+                    """, (inp,))
+    c = curs.fetchall()
+    print("The top 5 most popular genres of month " + inp + " are:")
+    for a in range(len(c)):
+        print(str(a+1) + ". " + c[a][0])
+                            
         
