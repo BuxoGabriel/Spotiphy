@@ -402,7 +402,8 @@ ignore: go back to Spotiphy Recommendations""")
             
             case default: 
                 pass
-
+            
+### (Popular) Genre Command
 def popularGenre(conn, uid):
     while True:
         inp = input("Enter a number corresponding to a month: ")
