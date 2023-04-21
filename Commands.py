@@ -14,6 +14,7 @@ def Help():
     collections: manipulate and listen to your collections
     search: lets you search for a song or album to add to collection or listen
     recommend: enjoy custom currated collections for you
+    genre: discover the most popular genres through a given month
     quit: ends program""")
 
 ### Register Command
@@ -154,6 +155,7 @@ def Collections(conn, uid):
     view: view a collection to add and delete songs
     number: find how many collections you have
     listen: listen to all the songs in collection
+
     quit: leave collections""")
             command = input("Spotiphy Collections: ").lower()
             match command:
@@ -280,17 +282,92 @@ def Search(conn, loggedIn, uid):
         case "album":
            # TODO
            pass 
-        
+    
+### Account Command
 def Account(conn, uid, username):
-    numFollowing = h.FetchFollowing(conn, uid, count=True)[0][0]
-    numFollowers = h.FetchFollowers(conn, uid, count=True)[0][0]
-    numCollections = h.FetchCollections(conn, uid, count=True)[0][0]
-    print("\nLogged in as %s" % uid)
-    print("User ID: %s" % username)
-    print("Following:  %s" % numFollowing)
-    print("Followers: %s" % numFollowers)
-    print("Collections: %s" % numCollections)
+    print("\nLogged in as %s" % username)
+    print("User ID: %s" % uid)
+    while True:
+        print("""\nAvailable operations:
+        followers: check how many people you follow and how many followers you have
+        collections: check how many collections you have
+        top: show the top 10 artists that the user listens to
+        quit: leave account profile""")
+        command = input("Spotiphy Account Profile: ")
+        match command:
+            case "followers" | "f":
+                numFollowing = h.FetchFollowing(conn, uid, count=True)[0][0]
+                numFollowers = h.FetchFollowers(conn, uid, count=True)[0][0]
+                print("Following:  %s" % numFollowing)
+                print("Followers: %s" % numFollowers)
+            case "collections" | "c":    
+                numCollections = h.FetchCollections(conn, uid, count=True)[0][0]
+                print("Collections: %s" % numCollections)
+            case "top" | "t":
+                print("""\nAvailable operations:
+                plays: show top 10 artists by most plays 
+                collections: show top 10 artists by additions to collections
+                both: show top 10 artists by a combination of most plays and collections
+                quit: leave top 10 artists command line""")
+                curs = conn.cursor()
+                t10c = input("Spotiphy Top 10 Artists: ")
+                match t10c:
+                    case  "plays" | "p":
+                        curs.execute("""SELECT name, COUNT(*) from (SELECT ars.uid, ars.sid, ars.arid, "Artist".name from (SELECT s.uid, s.sid, "SongArtist".arid  from (SELECT "User".uid, "ListenHistory".sid from "User"
+                                        INNER JOIN "ListenHistory" ON "User".uid = "ListenHistory".uid
+                                        ORDER BY uid) as s
+                                        INNER JOIN "SongArtist" ON s.sid = "SongArtist".sid) as ars
+                                        INNER JOIN "Artist" ON ars.arid = "Artist".arid
+                                        ORDER BY arid) as a
+                                        WHERE a.uid = %s
+                                        GROUP BY name
+                                        ORDER BY count(*) DESC
+                                        LIMIT 10""", (uid,))
+                        c = curs.fetchall()
+                        print("Your top 10 most played artists are:")
+                        for a in range(len(c)):
+                            print(str(a+1) + ". " + c[a][0])
+                            
+                    case  "collections" | "c":
+                        curs.execute("""SELECT name, COUNT(*) from (SELECT ucs.uid, a.name from (
+                        SELECT uu.uid, uu.cid, ct.sid from (SELECT u.uid, uc.cid from "User" as u
+                        INNER JOIN "UserCollection" uc on u.uid = uc.uid) as uu
+                        INNER JOIN "CollectionTrackList" ct ON uu.cid = ct.cid) as ucs
+                        INNER JOIN "SongArtist" sa ON sa.sid = ucs.sid
+                        INNER JOIN "Artist" a ON sa.arid = a.arid) as f
+                        WHERE f.uid = %s
+                        GROUP BY name
+                        ORDER BY count(*) DESC
+                        LIMIT 10""", (uid,))
+                        c = curs.fetchall()
+                        print("Your top 10 most played artists (from your collections) are:")
+                        for a in range(len(c)):
+                            print(str(a+1) + ". " + c[a][0])
+                            
+                    case  "both" | "b":
+                        curs.execute("""SELECT name, COUNT(*) from
+                        (SELECT u.uid, a.name from "User" as u
+                        INNER JOIN "UserCollection" uc on u.uid = uc.uid
+                        INNER JOIN "CollectionTrackList" ct ON uc.cid = ct.cid
+                        INNER JOIN "ListenHistory" lh ON u.uid = lh.uid
+                        INNER JOIN "SongArtist" sa ON sa.sid = ct.sid
+                        INNER JOIN "Artist" a ON sa.arid = a.arid) as f
+                        WHERE f.uid = '200'
+                        GROUP BY name
+                        ORDER BY count(*) DESC
+                        LIMIT 10""", (uid,))
+                        c = curs.fetchall()
+                        print("Your top 10 most played artists (from your collections) are:")
+                        for a in range(len(c)):
+                            print(str(a+1) + ". " + c[a][0])
+                            
+                    case "quit" | "q":
+                        break
+        
+            case "quit" | "q":
+                break
 
+### Recommend Command
 def Recommend(conn, uid):
     while(True):
         print("""\nWe have currated a list of collections for you to listen to.
@@ -329,4 +406,29 @@ ignore: go back to Spotiphy Recommendations""")
                 h.ListenTracklist(conn, uid, collection)
             
             case default: 
+                pass
+            
+### (Popular) Genre Command
+def popularGenre(conn, uid):
+    while True:
+        inp = input("Enter a number corresponding to a month: ")
+        month = int(inp)
+        if month > 12 or month < 1:
+            print("Invalid month. Please enter a number between (and including) 1 and 12")
+        else:
+            curs = conn.cursor()
+            curs.execute("""SELECT name, COUNT(*) from (SELECT date_part('month', "releaseDate"), g.name FROM "Album" as a
+                            INNER JOIN "AlbumGenre" ag on ag.aid = a.aid
+                            INNER JOIN "Genre" g on g.gid = ag.gid
+                            WHERE date_part('month', "releaseDate") = %s) as d
+
+                            GROUP BY name
+                            ORDER BY COUNT(*) DESC
+                            LIMIT 5
+                            """, (inp,))
+            c = curs.fetchall()
+            print("The top 5 most popular genres of month " + inp + " are:")
+            for a in range(len(c)):
+                print(str(a+1) + ". " + c[a][0])
+            break
                 pass
