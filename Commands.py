@@ -431,4 +431,3 @@ def popularGenre(conn, uid):
             for a in range(len(c)):
                 print(str(a+1) + ". " + c[a][0])
             break
-                pass
