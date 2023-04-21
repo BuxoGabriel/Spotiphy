@@ -282,7 +282,8 @@ def Search(conn, loggedIn, uid):
         case "album":
            # TODO
            pass 
-        
+    
+### Account Command
 def Account(conn, uid, username):
     print("\nLogged in as %s" % username)
     print("User ID: %s" % uid)
@@ -366,6 +367,7 @@ def Account(conn, uid, username):
             case "quit" | "q":
                 break
 
+### Recommend Command
 def Recommend(conn, uid):
     while(True):
         print("""\nWe have currated a list of collections for you to listen to.
