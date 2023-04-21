@@ -73,6 +73,8 @@ def main():
                         Commands.Search(conn, loggedIn, global_uid)
                     case "recommend" | "rec":
                         Commands.Recommend(conn, global_uid)
+                    case "genre" | "g":
+                        Commands.popularGenre(conn, global_uid)
                     case default:
                         print("Unrecognized command!")
     except Exception as e:

@@ -14,6 +14,7 @@ def Help():
     collections: manipulate and listen to your collections
     search: lets you search for a song or album to add to collection or listen
     recommend: enjoy custom currated collections for you
+    genre: discover the most popular genres through a given month
     quit: ends program""")
 
 ### Register Command
@@ -154,6 +155,7 @@ def Collections(conn, uid):
     view: view a collection to add and delete songs
     number: find how many collections you have
     listen: listen to all the songs in collection
+
     quit: leave collections""")
             command = input("Spotiphy Collections: ").lower()
             match command:
@@ -280,7 +282,8 @@ def Search(conn, loggedIn, uid):
         case "album":
            # TODO
            pass 
-        
+    
+### Account Command
 def Account(conn, uid, username):
     print("\nLogged in as %s" % username)
     print("User ID: %s" % uid)
@@ -364,6 +367,7 @@ def Account(conn, uid, username):
             case "quit" | "q":
                 break
 
+### Recommend Command
 def Recommend(conn, uid):
     while(True):
         print("""\nWe have currated a list of collections for you to listen to.
@@ -400,5 +404,29 @@ ignore: go back to Spotiphy Recommendations""")
             
             case default: 
                 pass
-                
+            
+### (Popular) Genre Command
+def popularGenre(conn, uid):
+    while True:
+        inp = input("Enter a number corresponding to a month: ")
+        month = int(inp)
+        if month > 12 or month < 1:
+            print("Invalid month. Please enter a number between (and including) 1 and 12")
+        else:
+            curs = conn.cursor()
+            curs.execute("""SELECT name, COUNT(*) from (SELECT date_part('month', "releaseDate"), g.name FROM "Album" as a
+                            INNER JOIN "AlbumGenre" ag on ag.aid = a.aid
+                            INNER JOIN "Genre" g on g.gid = ag.gid
+                            WHERE date_part('month', "releaseDate") = %s) as d
+
+                            GROUP BY name
+                            ORDER BY COUNT(*) DESC
+                            LIMIT 5
+                            """, (inp,))
+            c = curs.fetchall()
+            print("The top 5 most popular genres of month " + inp + " are:")
+            for a in range(len(c)):
+                print(str(a+1) + ". " + c[a][0])
+            break
+                            
         
