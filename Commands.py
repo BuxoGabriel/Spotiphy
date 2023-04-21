@@ -404,20 +404,26 @@ ignore: go back to Spotiphy Recommendations""")
                 pass
 
 def popularGenre(conn, uid):
-    inp = input("Enter a number corresponding to a month: ")
-    curs = conn.cursor()
-    curs.execute("""SELECT name, COUNT(*) from (SELECT date_part('month', "releaseDate"), g.name FROM "Album" as a
-                    INNER JOIN "AlbumGenre" ag on ag.aid = a.aid
-                    INNER JOIN "Genre" g on g.gid = ag.gid
-                    WHERE date_part('month', "releaseDate") = %s) as d
+    while True:
+        inp = input("Enter a number corresponding to a month: ")
+        month = int(inp)
+        if month > 12 or month < 1:
+            print("Invalid month. Please enter a number between (and including) 1 and 12")
+        else:
+            curs = conn.cursor()
+            curs.execute("""SELECT name, COUNT(*) from (SELECT date_part('month', "releaseDate"), g.name FROM "Album" as a
+                            INNER JOIN "AlbumGenre" ag on ag.aid = a.aid
+                            INNER JOIN "Genre" g on g.gid = ag.gid
+                            WHERE date_part('month', "releaseDate") = %s) as d
 
-                    GROUP BY name
-                    ORDER BY COUNT(*) DESC
-                    LIMIT 5
-                    """, (inp,))
-    c = curs.fetchall()
-    print("The top 5 most popular genres of month " + inp + " are:")
-    for a in range(len(c)):
-        print(str(a+1) + ". " + c[a][0])
+                            GROUP BY name
+                            ORDER BY COUNT(*) DESC
+                            LIMIT 5
+                            """, (inp,))
+            c = curs.fetchall()
+            print("The top 5 most popular genres of month " + inp + " are:")
+            for a in range(len(c)):
+                print(str(a+1) + ". " + c[a][0])
+            break
                             
         
