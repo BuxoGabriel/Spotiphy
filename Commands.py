@@ -372,11 +372,14 @@ def Recommend(conn, uid):
     while(True):
         print("""\nWe have currated a list of collections for you to listen to.
 In order to view a collection simply select one from the following list by its number(or type q to quit):
-1. Friends' Recent Listens""")
+1. Friends' Recent Listens
+2. Branch out: Recomended for you""")
         command = input("\nSpotiphy Recommendations: ").lower()
         match command:
             case "1":
                 collection = h.FetchTop50(conn, uid)
+            case "2":
+                collection = h.FetchRecommended(conn, uid)
             case "q":
                 break
             case default:
@@ -428,5 +431,4 @@ def popularGenre(conn, uid):
             for a in range(len(c)):
                 print(str(a+1) + ". " + c[a][0])
             break
-                            
-        
+                pass

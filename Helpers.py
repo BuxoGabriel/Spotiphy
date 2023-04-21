@@ -139,7 +139,7 @@ def FetchTop50(conn, uid):
     SQL = """
     SELECT title, sid, songlength FROM "Song" WHERE sid in(
     SELECT lh.sid FROM "Friends" f, "ListenHistory" lh 
-        WHERE f.uid1 = %s AND lh.date >= NOW() - INTERVAL '30 days'
+        WHERE f.uid1 = %s AND f.uid2 = lh.uid AND lh.date >= NOW() - INTERVAL '30 days'
         GROUP BY lh.sid
         ORDER BY COUNT(lh.sid) DESC
         LIMIT 50) """
@@ -159,5 +159,49 @@ def ListenTracklist(conn, uid, collection: list[tuple[str, int, int]]):
             curs.execute("""INSERT INTO "ListenHistory"(uid, sid, date) VALUES (%s, %s, %s) """, (uid, sid, date))
     print("Finished listening! Total Time Elapsed: %s" % time_elapsed)
     conn.commit()
-    curs.close()
-    
+    curs.close() 
+
+# Gets the 50 mrecommended songs based on listen history
+def FetchRecommended(conn, uid):
+    curs = conn.cursor()
+    recomendedSongs = []
+
+    # get top 5 songs listened to by each of top 5 most listened to artists
+    SQL = """SELECT sa.arid FROM "ListenHistory" lh, "SongArtist" sa
+        WHERE lh.uid = %s
+        GROUP BY sa.arid
+        ORDER BY COUNT(sa.arid) DESC
+        LIMIT 5
+    """
+    curs.execute(SQL, (uid,))
+    artists = curs.fetchall()
+    for arid in artists:
+        SQL = """SELECT title, sid, songlength FROM "Song" WHERE sid in(
+        SELECT lh.sid FROM "ListenHistory" lh, "SongArtist" sa
+        WHERE sa.arid = %s AND lh.sid = sa.sid
+        GROUP BY lh.sid
+        ORDER BY COUNT(lh.sid) DESC
+        LIMIT 5
+        )"""
+        curs.execute(SQL, (arid,))
+        for song in curs.fetchall():
+            recomendedSongs.append(song)
+    # get top 5 most pop songs of 2 most listened to genres
+    SQL = """SELECT sg.gid FROM "SongGenre" sg, "ListenHistory" lh
+        WHERE lh.uid = %s
+        GROUP BY sg.gid
+        ORDER BY COUNT(sg.gid) DESC
+        LIMIT 2"""
+    curs.execute(SQL, (uid,))
+    for gid in curs.fetchall():
+        SQL = """SELECT title, sid, songLength FROM "Song" WHERE sid in(
+        SELECT lh.sid FROM "ListenHistory" lh, "SongGenre" sg
+        WHERE sg.gid = %s AND lh.sid = sg.sid
+        GROUP BY lh.sid
+        ORDER BY COUNT(lh.sid) DESC
+        LIMIT 5
+        )"""
+        curs.execute(SQL, (gid,))
+        for song in curs.fetchall():
+            recomendedSongs.append(song)
+    return recomendedSongs
